@@ -950,7 +950,12 @@ MooEditable.UI.Dialog = new Class({
 				'display': 'none'
 			},
 			events: {
-				click: self.click.bind(self)
+				click: self.click.bind(self),
+				keyup: function(e) {
+					if (e.key=='esc') {
+						this.close();
+					}
+				}.bind(this)
 			}
 		});
 	},

@@ -17,13 +17,22 @@
 			}
 		</style>
 
+		<link rel="stylesheet" type="text/css" href="../../Assets/MooEditable/MooEditable.css">
 		<link rel="stylesheet" type="text/css" href="../../Assets/MooEditable/Ascribe/MooEditable.css">
 		<script type="text/javascript" src="../assets/mootools.js"></script>
+		<script type="text/javascript" src="../../Source/Ascribe/moo.more.js"></script>
 		<script type="text/javascript" src="../../Source/MooEditable/MooEditable.js"></script>
+		<script type="text/javascript" src="../../Source/MooEditable/MooEditable.Extras.js"></script>
+		<script type="text/javascript" src="../../Source/Ascribe/MooEditable.UI.Ascribe.Dialog.js"></script>
+		
 
 		<script type="text/javascript">
 			window.addEvent('domready', function(){
-				$('textarea-1').mooEditable();
+				var mooeditable = $('textarea-1').mooEditable({
+					actions: 'formatBlock | bold italic underline strikethrough | justifyleft justifycenter justifyright | insertunorderedlist insertorderedlist indent outdent | undo redo | asccreatelink unlink | urlimage | toggleview'
+				});
+
+
 
 				// Post submit
 				$('theForm').addEvent('submit', function(e){
@@ -36,16 +45,16 @@
 	</head>
 	<body>
 
-		<h1>MooEditable basic example</h1>
+		<h1>MooEditable basic example with Ascribe skin</h1>
 
 		<form id="theForm" method="post" action="http://form-data.appspot.com/">
 
-			<label for="textarea-1">Textarea 1</label>
+			<label for="textarea-1">Textarea Label (click to focus editor)</label>
 			<textarea id="textarea-1" name="editable1">
 			&lt;p&gt;&lt;strong&gt;This&lt;/strong&gt; is cool!&lt;/p&gt;
 			</textarea>
 
-			<input type="submit">
+			<input type="submit" value="Submit">
 
 		</form>
 
