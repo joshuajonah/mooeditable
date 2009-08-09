@@ -937,7 +937,6 @@ MooEditable.UI.Dialog = new Class({
 		'class': '',
 		contentClass: ''
 	},
-
 	initialize: function(html, options){
 		this.setOptions(options);
 		this.html = html;
