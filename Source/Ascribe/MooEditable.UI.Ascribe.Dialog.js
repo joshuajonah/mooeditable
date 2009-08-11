@@ -1293,7 +1293,26 @@ MooEditable.Actions.extend({
 			var el = e.target;
 			var tag = el.getParent().get('tag');
 			var argument = '<' + tag + '>';
-			this.execute('formatBlock', false, argument);
+			
+			if (Browser.Engine.webkit) {
+				var node = this.selection.getNode();
+				if (node) {
+					var blks = ["p","h1","h2",'h3','h4','h5','h6','code','pre'];
+					var node_tag = node.nodeName.toLowerCase();
+					if (!blks.contains(node_tag)) {
+						blks.each(function(blk){ 
+							var parent_blk = node.getParent(blk);
+							if (parent_blk) {
+								node = parent_blk;
+							}
+						});			
+					}
+					var new_blk = new Element(tag, {'html': node.get('html')}).inject(node,'before');
+					node.destroy(); 
+				}
+			} else {
+				this.execute('formatBlock', false, argument);
+			}
 			this.focus();
 			buttonOverlay.overlayVisible = true;
 			buttonOverlay.closeOverlay();

@@ -148,9 +148,7 @@
 	background-image: url(dialog/tip/as.gif)!important;
 }
 
-/*
-	for session alert modal
-*/
+
 .ModalMask {
 	background-color: black;
 }
