@@ -1,0 +1,84 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<title>MooEditable - Ascribe fork</title>
+
+		<style type="text/css">
+			body{
+				font-family: sans-serif;
+				font-size: .9em;
+			}
+			#textarea-1{
+				width: 700px;
+				height: 200px;
+				padding: 10px;
+				border: 2px solid #ddd;
+			}
+			#data { font-family: monospace; }
+		</style>
+
+		<link rel="stylesheet" type="text/css" href="Assets/MooEditable/MooEditable.css">
+		<link rel="stylesheet" type="text/css" href="Assets/MooEditable/Ascribe/MooEditable.css">
+		<script type="text/javascript" src="Demos/assets/mootools.js"></script>
+		<script type="text/javascript" src="Source/Ascribe/moo.more.js"></script>
+		<script type="text/javascript" src="Source/MooEditable/MooEditable.js"></script>
+		<script type="text/javascript" src="Source/Ascribe/MooEditable.UI.Ascribe.Dialog.js"></script>
+		
+
+		<script type="text/javascript">
+			window.addEvent('domready', function(){
+				var editor = $('textarea-1').mooEditable({
+					actions: 'formatBlock | bold italic underline strikethrough | justifyleft justifycenter justifyright | insertunorderedlist insertorderedlist indent outdent | undo redo | asc_createlink asc_unlink | urlimage | toggleview'
+				});
+
+
+
+				// Post submit
+				$('theForm').addEvent('submit', function(e){
+					alert($('textarea-1').value);
+					return true;
+				});
+				
+				var data = $('data');
+				
+				$('get_text_btn').addEvent('click', function(e) {
+					data.set('html', "getText() = " + editor.selection.getText());
+				});
+				$('get_focus_element_btn').addEvent('click', function(e) {
+					data.set('html', "getNode().nodeName = " + editor.selection.getNode().nodeName);
+				});
+				$('select_focus_element_btn').addEvent('click', function(e) {
+					editor.selection.selectNode(editor.selection.getNode());
+					data.set('html', "editor.selection.selectNode(editor.selection.getNode())");
+				});
+			});
+		</script>
+
+	</head>
+	<body>
+
+		<h1>MooEditable - Ascribe fork</h1>
+		
+		<p>Integrates <a href="http://www.ascribedata.com/moo/dialog/">Ascribe Dialog</a></p>
+
+		<form id="theForm" method="post" action="http://form-data.appspot.com/">
+
+			<label for="textarea-1">Textarea Label (click to focus editor)</label>
+			<textarea id="textarea-1" name="editable1">
+	<p><strong>This</strong> is <a href="http://www.google.com">cool</a>!</p>
+			</textarea>
+
+		<p>
+			<input type="submit" value="Submit">
+			<input type="button" id="get_text_btn" value="Get selected text">
+			<input type="button" id="get_focus_element_btn" value="Get focus element">
+			<input type="button" id="select_focus_element_btn" value="Select focus element">
+		</p>
+
+		</form>
+
+		<div id="data"></div>
+
+	</body>
+</html>

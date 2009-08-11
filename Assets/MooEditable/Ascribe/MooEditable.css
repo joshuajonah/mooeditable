@@ -7,8 +7,8 @@
 }
 
 .mooeditable-ui-toolbar .mooeditable-ui-button .button-icon{
-	background: transparent url(sprite-editor.png) no-repeat 0 -8px;
-	_background-image: url(sprite-editor.gif);
+	background: transparent url(icons/16x16/sprite-editor.png) no-repeat 0 -8px;
+	_background-image: url(icons/16x16/sprite-editor.gif);
 }
 
 .mooeditable-ui-toolbar .bold-item .button-icon{ background-position: 0 0; } 
@@ -27,9 +27,8 @@
 .mooeditable-ui-toolbar .undo-item .button-icon{ background-position: 0 -176px; } 
 .mooeditable-ui-toolbar .redo-item .button-icon{ background-position: 0 -192px; } 
 
-.mooeditable-ui-toolbar .asccreatelink-item .button-icon{ background-position: 0 -208px; } 
-.mooeditable-ui-toolbar .createlink-item .button-icon{ background-position: 0 -208px; } 
-.mooeditable-ui-toolbar .unlink-item .button-icon{ background-position: 0 -224px; } 
+.mooeditable-ui-toolbar .asc_createlink-item .button-icon, .mooeditable-ui-toolbar .createlink-item .button-icon{ background-position: 0 -208px; } 
+.mooeditable-ui-toolbar .unlink-item .button-icon, .mooeditable-ui-toolbar .asc_unlink-item .button-icon{ background-position: 0 -224px; } 
 
 .mooeditable-ui-toolbar .anchor-item .button-icon{ background-position: 0 -240px; } 
 
@@ -46,3 +45,336 @@
 .formatBlock-overlay p, .formatBlock-overlay h1, .formatBlock-overlay h2, .formatBlock-overlay h3, .formatBlock-overlay h4 { margin: 2px 0;}
 .formatBlock-overlay a { display: block; text-decoration: none; color: #222;  padding: 4px;  }
 .formatBlock-overlay a:hover { border: 0px solid white; background-color: white; color: black;  border-radius: 3px; -moz-border-radius: 3px; -khtml-border-radius: 3px; -webkit-border-radius: 3px; }
+
+
+/*
+	for arrowed tooltip
+*/
+.AscMask {
+	background-color: black;
+}
+.TipPop {
+	text-align: left; 
+	position: absolute;
+}
+.TipPop .grid {
+	width: 170px;
+	display: table;
+	border-collapse:collapse;border-spacing:0;padding:0;
+}
+.TipPop .grid tbody {
+	margin:0;padding:0;
+}
+.TipPop .grid td {
+	zoom:1;
+	margin:0;padding:0;
+}
+.TipPop .grid .nw {
+	width: 4px; 
+	background: transparent url(dialog/tip/l.gif) no-repeat 0% 0%;
+}
+.TipPop .grid .ne {
+	width: 4px; 
+	background: transparent url(dialog/tip/r.gif) no-repeat top right;
+}
+.TipPop .grid .sw {
+	width: 4px; height: 4px;
+	background: transparent url(dialog/tip/l.gif) no-repeat bottom left;
+}
+.TipPop .grid .se {
+	width: 4px; height: 4px;
+	background: transparent url(dialog/tip/r.gif) no-repeat bottom right;
+}
+.TipPop .grid .north {
+	background: transparent url(dialog/tip/c.gif) repeat-x 0% 0%;
+	padding: 7px 7px 3px 7px; 
+	font-size: 92%;
+	color: black;
+}
+.TipPop .grid .s {
+	height: 4px; 
+	background: transparent url(dialog/tip/c.gif) repeat-x 0% 100%;
+}
+
+
+.TipPop .TipClose { 
+	width: 16px;
+	height: 16px;
+	position: absolute;
+	top: 10px;
+	right: 12px;
+}
+.TipPop .TipClose a {
+	width: 16px;
+	height: 16px;
+	display: block;
+	background: transparent url(dialog/tip/fileclose.png) no-repeat 50% 50%;
+	filter:alpha(opacity=75);-moz-opacity:.75;opacity:.75;
+	z-index:10001;
+}
+.TipPop .TipClose a:hover {
+	filter:alpha(opacity=100);-moz-opacity:1;opacity:1; 
+}
+.TipPop .north .mi {
+	background-repeat: no-repeat;
+	background-position: top left;
+	padding: 0 0 0 22px;
+	margin: 2px 2px 2px 0;
+	min-height:16px;
+}
+
+
+.TipPop .p {
+	position: absolute;
+	visibility: hidden;
+	z-index:10002;
+	background-repeat: no-repeat;
+	display: block;
+}
+.TipPop .ae {
+	height: 16px; width: 9px;
+	background-image: url(dialog/tip/ae.gif)!important;
+}
+.TipPop .aw {
+	height: 16px; width: 9px;
+	background-image: url(dialog/tip/aw.gif)!important;
+}
+.TipPop .an {
+	width: 16px; height: 9px;
+	background-image: url(dialog/tip/an.gif)!important;
+}
+.TipPop .as {
+	width: 16px; height: 9px;
+	background-image: url(dialog/tip/as.gif)!important;
+}
+
+/*
+	for session alert modal
+*/
+.ModalMask {
+	background-color: black;
+}
+.ModalPop {
+	width: 387px !important;
+	text-align: left; 
+	filter:alpha(opacity=100);-moz-opacity:1;opacity:1; 
+}
+.ModalPop .grid {
+	width: 100%;
+	display: table;
+	border-collapse:collapse;border-spacing:0;padding:0;
+}
+.ModalPop .grid tbody {
+	margin:0;padding:0;
+}
+.ModalPop .grid td {
+	zoom:1;
+	margin:0;padding:0;
+}
+.ModalPop .grid .nw {
+	width: 7px; 
+	background: transparent url(dialog/modal/l.png) no-repeat 0% 0%;
+}
+.ModalPop .grid .ne {
+	width: 7px; 
+	background: transparent url(dialog/modal/r.png) no-repeat top right;
+}
+.ModalPop .grid .sw {
+	width: 7px; height: 7px;
+	background: transparent url(dialog/modal/l.png) no-repeat bottom left;
+}
+.ModalPop .grid .se {
+	width: 7px; height: 7px;
+	background: transparent url(dialog/modal/r.png) no-repeat bottom right;
+}
+.ModalPop .grid .north {
+	background: transparent url(dialog/modal/c.png) repeat-x 0% 0%;
+	padding: 8px; 
+	font-size: 82%;
+	color: black;
+}
+.ModalPop .grid .s {
+	height: 7px; 
+	background: transparent url(dialog/modal/c.png) repeat-x 0% 100%;
+}
+
+.ModalPop .grid .b p { margin: 0 0 2px 0;}
+.ModalPop .grid .b h4 { font-size: 92%; margin: 0 0 3px 0; text-transform: uppercase;}
+.ModalPop .grid .b h5 { font-size: 92%; margin: 0 0 2px 0;}
+.ModalPop .ModalClose { 
+	width: 16px;
+	height: 16px;
+	position: absolute;
+	top: 10px;
+	right: 12px;
+}
+.ModalPop .ModalClose a {
+	width: 16px;
+	height: 16px;
+	display: block;
+	background: transparent url(dialog/modal/fileclose.png) no-repeat 50% 50%;
+	filter:alpha(opacity=75);-moz-opacity:.75;opacity:.75;
+	z-index:10001;
+}
+.ModalPop .ModalClose a:hover {
+	filter:alpha(opacity=100);-moz-opacity:1;opacity:1; 
+}
+.ModalPop .mi {
+	background-repeat: no-repeat;
+	background-position: top left;
+	padding: 0 15px 20px 75px;
+	margin: 0 15px 0px 5px;
+	min-height: 64px;
+}
+.ModalPop .alert .mi {
+	background-image: url(icons/64x64/alert.png);
+}
+.ModalPop .link .mi {
+	background-image: url(icons/64x64/link.png);
+}
+.ModalPop .link .mi input {
+	width: 250px;
+	font-size: 100%;
+}
+.ModalPop .mi table.btns {
+	margin: 5px 0 0 0;
+}
+.ModalPop .mi table.btns td {
+	vertical-align: middle;
+}
+.ModalPop .mi table.btns td.or {
+	padding: 0 4px;
+	font-size: 82%;
+}
+.ModalPop .mi a.cancel-btn {
+	font-size: 92%;
+	color: red;
+}
+.ModalPop .mi {
+	font-size: 100%;
+}
+.ModalPop .mi h3 {
+	font-size: 140%;
+	margin: 6px 0 6px 0;
+}
+.ModalPop .mi p.med {
+	font-size: 122%;
+	margin: 0 0 8px 0;
+	color: #264E75;
+}
+.ModalPop .mi p.sm {
+	font-size: 100%;
+	margin: 0 0 8px 0;
+}
+.ModalPop .mi p.alert {
+	font-size: 122%;
+	font-weight: normal;
+	color: #eb5800;
+	padding: 0;
+}
+.ModalPop .cd {
+	font-size: 450%;
+	line-height: .5;
+	font-weight: bold;
+	color: #264E75;
+}
+.ModalPop .f .mi .msg .cd {
+	color: #CC0000;
+}
+.ModalPop .i .mi .msg .cd {
+	color: #FF9900;
+}
+a.form, a.form-down {
+	background:transparent none no-repeat scroll right bottom;
+	cursor:pointer;
+	display: -moz-inline-stack; /* -moz! */
+	display: inline-block; 
+	font-size-adjust:none;
+	font-stretch:normal;
+	font-style:normal;
+	font-variant:normal;
+	line-height:1em;
+	overflow:visible !important;
+	text-align:center;
+	text-decoration:none;
+	vertical-align:bottom;
+	color:#000 !important;
+	font-size:100%;
+	padding-top:7px;
+}
+a.form span, a.form-down span {
+	background:transparent none no-repeat scroll left bottom;
+	display:block;
+	overflow:visible !important;
+	text-align:center;
+	vertical-align:bottom;
+	margin-right:7px;
+}
+a.form span span, a.form-down span span {
+	background:transparent none no-repeat scroll right top;
+	display:block;
+	border:0pt none;
+	overflow:visible !important;
+	position:relative;
+	vertical-align:bottom;
+	margin-right:-7px;
+	top:-7px;
+}
+a.form span span span, a.form-down span span span {
+	display:block;
+	background:transparent none no-repeat scroll left top;
+	overflow:visible !important;
+	position:static;
+	white-space:nowrap;
+	vertical-align:bottom;
+	margin:0pt 7px 0pt 0pt;
+	padding:0.5em 0.8em 0.2em 1.1em;
+}
+
+
+a.form {
+	background-image:url(btn-form/out_se.gif);
+}
+a.form span {
+	background-image:url(btn-form/out_sw.gif);
+}
+a.form span span {
+	background-image:url(btn-form/out_ne.gif);
+}
+a.form span span span {
+	background-image:url(btn-form/out_nw.gif);
+}
+
+a.form:hover {
+	background-image:url(btn-form/over_se.gif);
+	color:#000 !important;
+}
+a.form:hover span {
+	background-image:url(btn-form/over_sw.gif);
+}
+a.form:hover span span {
+	background-image:url(btn-form/over_ne.gif);
+}
+a.form:hover span span span {
+	background-image:url(btn-form/over_nw.gif);
+}
+
+a.form span span span img, a.form-down span span span img { margin-right: 5px; }
+a.form span span span img { filter:alpha(opacity=75);-moz-opacity:.75;opacity:.75; }
+a.form:hover span span span img { filter:alpha(opacity=100);-moz-opacity:1;opacity:1; }
+a.form-down span span span img { filter:alpha(opacity=45);-moz-opacity:.45;opacity:.45; }
+
+
+a.form-down {
+	background-image:url(btn-form/down_se.gif);
+	color: #D4D4D4 !important;
+}
+a.form-down span {
+	background-image:url(btn-form/down_sw.gif);
+}
+a.form-down span span {
+	background-image:url(btn-form/down_ne.gif);
+}	
+a.form-down span span span {
+	background-image:url(btn-form/down_nw.gif);
+}
