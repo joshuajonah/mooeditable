@@ -1265,6 +1265,9 @@ window.addEvent('domready', function(){
 						node.destroy(); 
 					}
 				} else {
+					if (Browser.Engine.trident) {
+						this.selection.selectNode(this.selection.getNode());
+					}
 					this.execute('formatBlock', false, argument);
 				}
 				this.focus();
