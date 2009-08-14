@@ -1,1 +1,3 @@
-mooeditable.js
+*.DS_Store
+*.bak
+Thumbs.db

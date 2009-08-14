@@ -203,7 +203,8 @@ var MooEditable = new Class({
 			dbllick: this.editorDoubleClick.bind(this),
 			keypress: this.editorKeyPress.bind(this),
 			keyup: this.editorKeyUp.bind(this),
-			keydown: this.editorKeyDown.bind(this)
+			keydown: this.editorKeyDown.bind(this),
+			scroll: this.editorScroll.bind(this)
 		});
 		this.textarea.addEvent('keypress', this.textarea.retrieve('mooeditable:textareaKeyListener', this.keyListener.bind(this)));
 		
@@ -368,6 +369,27 @@ var MooEditable = new Class({
 		this.fireEvent('editorKeyDown', [e, this]);
 	},
 	
+	editorScroll: function(e){
+
+		if (this.editorDisabled){
+			e.stop();
+			return;
+		}
+
+		this.actions.each(function(action){
+			var item = this.toolbar.getItem(action);
+			if (item) {
+				var onScroll = MooEditable.Actions[action]['onScroll'];
+				if ($type(onScroll) == 'function'){
+					onScroll.attempt(this);
+					return;
+				}
+			}
+		}.bind(this));
+				
+		this.fireEvent('editorScroll', [e, this]);
+	},
+
 	keyListener: function(e){
 		var key = (Browser.Platform.mac) ? e.meta : e.control;
 		if (!key || !this.keys[e.key]) return;
@@ -448,7 +470,7 @@ var MooEditable = new Class({
 			
 			// custom checkState
 			if ($type(states) == 'function'){
-				states.attempt(el, item);
+				states.attempt([el,this], item);
 				return;
 			}
 			

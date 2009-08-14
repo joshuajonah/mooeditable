@@ -1,4 +1,99 @@
 /*
+Script: MooEditable.UI.MenuList.js
+	UI Class to create a menu list (select) element.
+
+License:
+	MIT-style license.
+
+Copyright:
+	Copyright (c) 2007-2009 [Lim Chee Aun](http://cheeaun.com).
+*/
+MooEditable.UI.ButtonOverlay = new Class({
+
+	Extends: MooEditable.UI.Button,
+
+	options: {
+		/*
+		onOpenOverlay: $empty,
+		onCloseOverlay: $empty,
+		*/
+		overlayHTML: '',
+		overlayClass: '',
+		overlaySize: {x: 150, y: 'auto'},
+		overlayContentClass: ''
+	},
+
+	initialize: function(options){
+		this.parent(options);
+		this.render();
+		this.el.addClass('mooeditable-ui-buttonOverlay');
+		this.renderOverlay(this.options.overlayHTML);
+	},
+	
+	renderOverlay: function(html){
+		var self = this;
+		this.overlay = new Element('div', {
+			'class': 'mooeditable-ui-button-overlay ' + self.name + '-overlay ' + self.options.overlayClass,
+			html: '<div class="overlay-content ' + self.options.overlayContentClass + '">' + html + '</div>',
+			tabindex: 0,
+			styles: {
+				left: '-999em',
+				position: 'absolute',
+				width: self.options.overlaySize.x,
+				height: self.options.overlaySize.y
+			},
+			events: {
+				mousedown: self.clickOverlay.bind(self),
+				focus: self.openOverlay.bind(self),
+				blur: self.closeOverlay.bind(self)
+			}
+		}).inject(document.body).store('MooEditable.UI.ButtonOverlay', this);
+		this.overlayVisible = false;
+	},
+	
+	openOverlay: function(){
+		if (this.overlayVisible) return;
+		this.overlayVisible = true;
+		this.activate();
+		this.fireEvent('openOverlay', this);
+		return this;
+	},
+	
+	closeOverlay: function(){
+		if (!this.overlayVisible) return;
+		this.overlay.setStyle('left', '-999em');
+		this.overlayVisible = false;
+		this.deactivate();
+		this.fireEvent('closeOverlay', this);
+		return this;
+	},
+	
+	clickOverlay: function(e){
+		if (e.target == this.overlay || e.target.parentNode == this.overlay) return;
+		e.preventDefault();
+		this.action(e);
+		this.overlay.blur();
+	},
+	
+	click: function(e){
+		e.preventDefault();
+		if (this.disabled) return;
+		if (this.overlayVisible){
+			this.overlay.blur();
+			return;
+		} else {
+			var coords = this.el.getCoordinates();
+			this.overlay.setStyles({
+				top: coords.bottom,
+				left: coords.left
+			});
+			this.overlay.focus();
+		}
+	}
+	
+});
+
+/*
 Script: MooEditable.UI.AscribeDialog.js
 	UI Class to create Ascribe Dialog
 
@@ -46,6 +141,7 @@ var AscDialog = new Class({
 			'se': { trans:'fly', target:'window', io:-1, align:'c', offset:0, margin:0 }, // show end
 			'he': { trans:'fly', target:'window', io:1, align:'n', offset:0, margin:0 } // hide end
 		},
+		posRelative: null,
 		onHide: Class.empty,
 		onShow: Class.empty,
 		onFirstShow: Class.empty,
@@ -69,27 +165,23 @@ var AscDialog = new Class({
 
 		this.fx_dir = 0; // track whether showing/hiding
 		this.fx_in_process = false;
-
-		window.addEvent('keyup', function(e){ 
-			this.esc(e);
-		}.bind(this));			
-		window.addEvent('resize', function(e){ 
-			this.update(e);
-			if(this.isShowing){
-				this.isShowing = false;
-				this.show();
-			}
-
-		}.bind(this));			
-		window.addEvent('scroll', function(e){ 
-			this.update(e);
-		}.bind(this));		
-
+		
+		window.addEvents({
+			'keyup': this.esc.bindWithEvent(this),
+			'resize': function(e){ 
+				this.update(e);
+				if(this.isShowing){
+					this.isShowing = false;
+					this.show();
+				}
+			}.bind(this),
+			'scroll': this.update.bindWithEvent(this)
+		});
 		this.init();
 	},
 	init: function(){
 		if (this.pop) {
-			this.pop.remove();
+			this.pop.destroy();
 		}
 		this.add_pop();
 		var fxels = [this.pop];
@@ -117,7 +209,7 @@ var AscDialog = new Class({
 						}
 						this.isShowing = true;
 						if (this.options.isModal) {
-							this.pop.focus(); // to activate pop close by ESC, the ESC keydown for window doesn't work in IE
+							this.pop.fireEvent('focus', '', 200); // to activate pop close by ESC, the ESC keydown for window doesn't work in IE
 						}
 						this.fireEvent('show');
 						break;
@@ -130,7 +222,7 @@ var AscDialog = new Class({
 						if (this.options.isModal) {
 							this.mask.setStyle('display', 'none');
 						}
-						if (!this.options.isModal) {
+						if (!this.options.isModal && this.mask) {
 							this.mask.set('opacity',0);
 						}
 						this.fireEvent('hide');
@@ -142,21 +234,7 @@ var AscDialog = new Class({
 	},
 	add_mask: function(){
 		if (!this.mask)	{
-			if (this.isIE6){
-				// need to use IFRAME for IE in order to cover SELECT elements
-				this.mask = new Element('iframe', {
-					'class':this.options.classPrefix+'Mask',
-					'src':"about:blank",
-					'frameborder':0,
-					'src':"about:blank"
-				}).inject(document.body);
-			} else {
-				// make mask a div for other browsers
-				this.mask = new Element('div', {
-					'class':this.options.classPrefix+'Mask'
-				}).inject(document.body);
-			}
-			this.mask.setStyles({
+			var mask_styles = {
 				'position':'absolute',
 				'top': 0,
 				'left': 0,
@@ -164,7 +242,23 @@ var AscDialog = new Class({
 				'z-index': 9999,
 				'background-color':this.options.maskColor,
 				'display': 'none'
-			});
+			};
+			if (this.isIE6){
+				// need to use IFRAME for IE in order to cover SELECT elements
+				this.mask = new Element('iframe', {
+					'class':this.options.classPrefix+'Mask',
+					'src':"about:blank",
+					'frameborder':0,
+					'src':"about:blank",
+					styles: mask_styles
+				}).inject(document.body);
+			} else {
+				// make mask a div for other browsers
+				this.mask = new Element('div', {
+					'class':this.options.classPrefix+'Mask',
+					styles: mask_styles
+				}).inject(document.body);
+			}
 		}
 	},
 	add_pop: function(){
@@ -196,7 +290,7 @@ var AscDialog = new Class({
 				'z-index': 10000,
 				'display': 'none'
 			}
-		}).inject(document.body);
+		}).inject(document.body, 'bottom');
 
 		this.pop.addEvent('keydown', function(e){ 
 			this.esc(e);
@@ -477,7 +571,6 @@ var AscDialog = new Class({
 		if (was_dn) {
 			this.pop.setStyle('display', 'none');
 		}
-
 	},
 	esc: function(e){
 		if (this.isShowing && (e.key == 'esc'))	{
@@ -755,7 +848,9 @@ var AscDialog = new Class({
 	},
 	coord: function(target, io, align, offset, arr_mode) {
 		var top=0,left=0,tdim=0;
-
+		
+		this.fireEvent('beforeCoord');
+		
 		if (target == 'window') {
 			top = window.getScrollTop();
 			left = window.getScrollLeft();
@@ -767,6 +862,7 @@ var AscDialog = new Class({
 				var t = target;
 			}
 			if (t) {
+				// figure out if the element is in the same window as the dialog
 				var tpos = t.getPosition();
 				if (!tpos && (t.getStyle('display')=='inline')) {
 					var tpos = this.cursor_pos(this.event);
@@ -903,6 +999,10 @@ var AscDialog = new Class({
 				top += pa.p.top;
 				left += pa.p.left;
 			}
+			if (this.posRelative) {
+				top += this.posRelative.y;
+				left += this.posRelative.x;
+			}
 			return { 'top': top, 'left': left };
 		}
 		return false
@@ -915,518 +1015,734 @@ var AscDialog = new Class({
 	}
 
 });
-var AscModal = new Class({
-	Implements: [Options,Events], 
-    Extends: AscDialog,
- 	options: {
+
+window.addEvent('domready', function(){
+	
+	function gen_btn(str, cls, extra_cls){
+		var obj = { 'class': cls + ' ' + extra_cls, 'href':'#' };
+		var anchor = new Element('a', obj);
+		var s1 = new Element('span').inject(anchor);
+		var s2 = new Element('span').inject(s1);
+		var s3 = new Element('span', {'class':'s3'}).set('html',str).inject(s2);
+		return anchor;
+	};
+
+	var AscDialogModal = new AscDialog({
 		isModal: true,
-		addCloseBtn: true,
-		popOpacity: .9,
+		addCloseBtn: false, 
+		popOpacity: .97,
+		speed:150,
 		classPrefix: 'Modal',
 		place: {
-			'ss': { target:'window', io:1, align:'n'}, // show start
-			'se': { trans:'fly', target:'window', io:-1, align:'c'}, // show end
-			'he': { trans:'fly', target:'window', io:1, align:'n'} // hide end
+			'se': { trans:'fade', target:'window', io:-1, align:'c', offset:0, margin:0 }, // show end
+			'he': { trans:'fade', target:'window', io:-1} // hide end
 		}
-	},
-	initialize: function(msg, cls, options){
-        this.parent(options); 
-		this.set_contents(msg, cls);
-    }
-});
-var AscTip = new Class({
-	Implements: [Options,Events], 
-    Extends: AscDialog,
- 	options: {
-		addCloseBtn: false,
-		speed: 200,
+	});
+	var AscLinkEditModal = new AscDialog({
+		isModal: false,
+		addCloseBtn: true, 
 		useArrows: true,
-		popOpacity: .9,
+		popOpacity: .97,
+		speed:150,
 		actionDelay: 50,
 		showDelay: 0,
 		hideDelay: 0,
 		default_align:'auto',
-		classPrefix: 'Tip',
+		classPrefix: 'Link',
 		place: {
-			'ss': { 'io':1, offset:16 }, // show start
+			'ss': { 'io':1, offset:6 }, // show start
 			'se': { 'io':1, offset:6 }, // show end
 			'he': { trans:'fade' } // hide end
-		}
-	},
-	initialize: function(el, msg, cls, options, width){
-        this.parent(options);
-		this.current_el;
-		this.mousein = false;
-
-		if ($type(el)=='element') {
-			this.enable_tip(el, msg, cls, width);
-		} 
-    },
-	enable_tip: function(el, msg, cls, width, align) {
-		if (el) {
-			el.addEvents({
-				'mouseenter': function(e) {
-					this.event = e;
-					this.current_el = el;
-					this.mousein = true;
-					$clear(this.timer);
-					this.timer = this.do_show.delay(this.options.showDelay, this, [el, msg, cls, width, align]);
-
-				}.bind(this),	 
-				'mouseleave': function(e) {
-					this.mousein = false;
-					$clear(this.timer);
-					if (this.current_el == el) {
-						this.current_el = '';
-					}
-					if (this.fx_in_process && (this.fx_dir == 1)) {
-						this.isShowing = true;
-						this.hide();
-					} else {						
-						this.timer = this.hide.delay(this.options.hideDelay, this);
-					}
-				}.bind(this)
-			});
-		}
-		return false;
-	},
-	do_show: function(el, msg, cls, width, align) {
-		if (this.mousein && (this.current_el == el)) {
-
-			var op = this.options.place;
-
-			this.set_contents(msg, cls, width);
-
-			if (!$chk(align)) {
-				align = this.options.default_align;
-			}
-
-			var settings = {
-				'target':el,
-				'align':this.auto_align(el, align)
-			};
-			if (op.se.trans=='fly')	{
-				$extend(op.ss, settings);
-				op.ss.offset = 25;
-			}
-			if (this.isShowing || this.fx_in_process) {
-				if (this.fx_in_process) {
-					this.fx.cancel();
+		},
+		onBeforeCoord: function() {
+			if (this.posRelativeEl) {
+				this.posRelative = this.posRelativeEl.getPosition();
+				if (this.scrollRelativeEl) {
+					this.posRelative.x -= this.scrollRelativeEl.x;
+					this.posRelative.y -= this.scrollRelativeEl.y;
 				}
-				op.ss.target = '';
+			} else {
+				this.posRelative = {x: 0, y: 0};
 			}
-			this.isShowing = false;
-			$extend(op.se, settings);
-			$extend(op.he, settings);
-
-			this.show();
 		}
+	});
+	
+	var formatBlockOverlayWidth = 150;
+	if (Browser.Engine.trident) {
+		formatBlockOverlayWidth = 165;
 	}
-});
-var AscTips = new Class({
-	Implements: [Options,Events], 
-    Extends: AscTip,
- 	initialize: function(els, options){
-        this.parent('', '', '', options);
-		if ($type(els)=='array') {
-			var i, ct=els.length,t;
-			for (i=0;i<ct;i++ ) {
-				if (els[i]) {
-					t = $(els[i].id);
-					if (t) {
-						this.enable_tip(t, els[i].msg, els[i].cls, els[i].width, els[i].align);
-					}
+	
+	MooEditable.UI.AscDialog = new Class({
+	
+		Implements: [Events, Options],
+	
+		options:{
+			/*
+			onOpen: $empty,
+			onPreShow: $empty,
+			onShow: $empty,
+			onClose: $empty,
+			*/
+			modal_speed: 150
+		},
+		initialize: function(html, options, modal_class){
+			this.setOptions(options);
+			this.html = html;
+			this.modal_class = modal_class;
+			
+			this.modal = AscDialogModal;
+			this.els = {};
+		},
+		
+		toElement: function(){
+			return this.modal.pop;
+		},
+		
+		click: function(){
+			this.fireEvent('click', arguments);
+			return this;
+		},
+		
+		open: function(modal_width){
+			this.modal.init();
+			
+			this.modal.addEvent('hide', function() {
+				// this reactivates toolbar upon modal hide
+				this.fireEvent('close', this);
+			}.bind(this));
+			
+			// return all clicks on the modal dialog to the click function
+			this.modal.pop.addEvent('click', this.click.bind(this));
+			
+			// refresh the modal contents to that of this dialog
+			this.modal.set_contents(this.html, this.modal_class, modal_width);
+			
+			this.fireEvent('preshow', this);
+			
+			// position the modal to the center of the editor
+			var body = $(document.body);
+			var container = body.getElement('.mooeditable-container');
+			body.grab(this.modal.pop, 'bottom');
+			this.modal.options.place.ss.target = container;
+			this.modal.options.place.se.target = container;
+			this.modal.options.place.he.target = container;
+			
+			// establish action to take once the modal is finished showing
+			this.modal.removeEvents('show');
+			this.modal.addEvent('show', function() {
+				this.fireEvent('show', this);
+				this.fireEvent('open', this);
+			}.bind(this));
+			
+			// start modal show animation
+			this.modal.show();
+			
+			return this;
+		},
+		
+		close: function(){
+			this.modal.hide();
+			return this;
+		}
+	
+	});
+	MooEditable.UI.AscAlertDialog = function(alertText){
+		if (!alertText) return;
+	
+		var d = new Element('div');
+		var c = new Element('div',{'class':'eregmodal'}).inject(d);
+		var p = new Element('p',{'class':'alert', 'html': alertText}).inject(c);
+		var ok2 = gen_btn('OK', 'cancel-btn', 'form').inject(c);
+		var html = d.get('html');
+	
+		return new MooEditable.UI.AscDialog(html, {
+			onClick: function(e){
+				e.preventDefault();
+				var link = '';
+				var el = e.target;
+				var tag = e.target.tagName.toLowerCase();
+				if (tag == 'span') {
+					link = $(el).getParent('a[*=cancel-btn]');
+				} else if (tag == 'a') {
+					if (document.id(e.target).hasClass('cancel-btn')) link = el;
 				}
-			}
-		}
-    }
-});
-/*
-Script: MooEditable.UI.MenuList.js
-	UI Class to create a menu list (select) element.
-
-License:
-	MIT-style license.
-
-Copyright:
-	Copyright (c) 2007-2009 [Lim Chee Aun](http://cheeaun.com).
-*/
-MooEditable.UI.ButtonOverlay = new Class({
-
-	Extends: MooEditable.UI.Button,
-
-	options: {
-		/*
-		onOpenOverlay: $empty,
-		onCloseOverlay: $empty,
-		*/
-		overlayHTML: '',
-		overlayClass: '',
-		overlaySize: {x: 150, y: 'auto'},
-		overlayContentClass: ''
-	},
-
-	initialize: function(options){
-		this.parent(options);
-		this.render();
-		this.el.addClass('mooeditable-ui-buttonOverlay');
-		this.renderOverlay(this.options.overlayHTML);
-	},
-	
-	renderOverlay: function(html){
-		var self = this;
-		this.overlay = new Element('div', {
-			'class': 'mooeditable-ui-button-overlay ' + self.name + '-overlay ' + self.options.overlayClass,
-			html: '<div class="overlay-content ' + self.options.overlayContentClass + '">' + html + '</div>',
-			tabindex: 0,
-			styles: {
-				left: '-999em',
-				position: 'absolute',
-				width: self.options.overlaySize.x,
-				height: self.options.overlaySize.y
-			},
-			events: {
-				mousedown: self.clickOverlay.bind(self),
-				focus: self.openOverlay.bind(self),
-				blur: self.closeOverlay.bind(self)
-			}
-		}).inject(document.body).store('MooEditable.UI.ButtonOverlay', this);
-		this.overlayVisible = false;
-	},
-	
-	openOverlay: function(){
-		if (this.overlayVisible) return;
-		this.overlayVisible = true;
-		this.activate();
-		this.fireEvent('openOverlay', this);
-		return this;
-	},
-	
-	closeOverlay: function(){
-		if (!this.overlayVisible) return;
-		this.overlay.setStyle('left', '-999em');
-		this.overlayVisible = false;
-		this.deactivate();
-		this.fireEvent('closeOverlay', this);
-		return this;
-	},
-	
-	clickOverlay: function(e){
-		if (e.target == this.overlay || e.target.parentNode == this.overlay) return;
-		e.preventDefault();
-		this.action(e);
-		this.overlay.blur();
-	},
-	
-	click: function(e){
-		e.preventDefault();
-		if (this.disabled) return;
-		if (this.overlayVisible){
-			this.overlay.blur();
-			return;
-		} else {
-			var coords = this.el.getCoordinates();
-			this.overlay.setStyles({
-				top: coords.bottom,
-				left: coords.left
-			});
-			this.overlay.focus();
-		}
-	}
-	
-});
-
-
-
-function gen_btn(str, cls, extra_cls){
-	var obj = { 'class': cls + ' ' + extra_cls, 'href':'#' };
-	var anchor = new Element('a', obj);
-	var s1 = new Element('span').inject(anchor);
-	var s2 = new Element('span').inject(s1);
-	var s3 = new Element('span').set('html',str).inject(s2);
-	return anchor;
-};
-
-
-MooEditable.UI.AscDialog = new Class({
-
-	Implements: [Events, Options],
-
-	options:{
-		/*
-		onOpen: $empty,
-		onClose: $empty,
-		*/
-		modal_speed: 150
-	},
-	initialize: function(html, options, modal_class){
-		this.setOptions(options);
-		this.modal = new AscModal(html, modal_class, {'addCloseBtn': false, 'speed':this.options.modal_speed});
-		this.modal.pop.addEvent('click', this.click.bind(this));
-	},
-	
-	toElement: function(){
-		return this.modal.pop;
-	},
-	
-	click: function(){
-		this.fireEvent('click', arguments);
-		return this;
-	},
-	
-	open: function(){
-		this.modal.show();
-		this.fireEvent('open', this, this.options.modal_speed);
-		return this;
-	},
-	
-	close: function(){
-		this.modal.hide();
-		this.fireEvent('close', this, this.options.modal_speed);
-		return this;
-	}
-
-});
-MooEditable.UI.AscAlertDialog = function(alertText){
-	if (!alertText) return;
-
-	var d = new Element('div');
-	var c = new Element('div',{'class':'eregmodal'}).inject(d);
-	var p = new Element('p',{'class':'alert', 'html': alertText}).inject(c);
-	var ok2 = gen_btn('OK', 'cancel-btn', 'form').inject(c);
-	var html = d.get('html');
-
-	return new MooEditable.UI.AscDialog(html, {
-		onOpen: function(){
-			this.modal.pop.focus();
-			this.modal.addEvent('keydown', function (e) {
-				alert(e.key);
-				if (e.key=='enter') {
+				if (link) {
 					this.close();
 				}
-			}.bind(this));
-		},
-		onClick: function(e){
-			e.preventDefault();
-			var link = '';
-			var el = e.target;
-			var tag = e.target.tagName.toLowerCase();
-			if (tag == 'span') {
-				link = el.getParent('a[*=cancel-btn]');
-			} else if (tag == 'a') {
-				if (document.id(e.target).hasClass('cancel-btn')) link = el;
 			}
-			if (link) {
-				this.close();
-			}
-		}
-	}, 'alert');
-};
-
-MooEditable.UI.AscPromptDialog = function(questionText, submitBtnText, fn, dialog_class){
-	if (!questionText) return;
-
-	var d = new Element('div');
-	var c = new Element('div').inject(d);
-	var p = new Element('h3',{'html': questionText}).inject(c);
-	var input_text = new Element('input', {'type':'text', 'class':'dialog-input', 'value': '' }).inject(c);
-	var tbl = new Element('table', {'class':'btns'}).inject(c);
-	var tbody = new Element('tbody').inject(tbl);
-	var tr = new Element('tr').inject(tbody);
-	var td2 = new Element('td', {'class':'btns'} ).inject(tr);
-	var submit_btn_a = gen_btn(submitBtnText, 'form submit-dialog').inject(td2);
-	var td3 = new Element('td', {'class':'or', 'html':'or'}).inject(tr);
-	var td4 = new Element('td', {'class':'cancel'} ).inject(tr);
-	var cancel_a = new Element('a', {'href':'#', 'class': 'cancel-btn', 'html':'Cancel'}).inject(td4);
-
-	var html = d.get('html');
-
-	return new MooEditable.UI.AscDialog(html, {
-		onOpen: function(){
-			var input = this.modal.pop.getElement('input[*=dialog-input]');
-			if (input) {
-				input.addEvent('keydown', function(e) {
-					if (e.key=='enter') {
+		}, 'alert');
+	};
+	
+	MooEditable.UI.AscPromptDialog = function(questionText, submitBtnText, fn, dialog_class){
+		if (!questionText) return;
+	
+		var d = new Element('div');
+		var c = new Element('div').inject(d);
+		var h3 = new Element('h3',{'html': questionText}).inject(c);
+		var input_text = new Element('input', {'type':'text', 'class':'dialog-input', 'value': '' }).inject(c);
+		var tbl = new Element('table', {'class':'btns'}).inject(c);
+		var tbody = new Element('tbody').inject(tbl);
+		var tr = new Element('tr').inject(tbody);
+		var td2 = new Element('td', {'class':'btns'} ).inject(tr);
+		var submit_btn_a = gen_btn(submitBtnText, 'form submit-dialog').inject(td2);
+		var td3 = new Element('td', {'class':'or', 'html':'or'}).inject(tr);
+		var td4 = new Element('td', {'class':'cancel'} ).inject(tr);
+		var cancel_a = new Element('a', {'href':'#', 'class': 'cancel-btn', 'html':'Cancel'}).inject(td4);
+	
+		var html = d.get('html');
+	
+		return new MooEditable.UI.AscDialog(html, {
+			onOpen: function(){
+				var input = this.modal.pop.getElement('input[*=dialog-input]');
+				if (input) {
+					input.addEvent('keydown', function(e) {
+						if (e.key=='enter') {
+							if (fn) fn.attempt(input.get('value'), this);
+							this.close();
+						}
+					}.bind(this));
+					(function(){
+						input.focus();
+					}).delay(1);
+				}
+			},
+			onClick: function(e){
+				e.preventDefault();
+				var link = '';
+				var el = e.target;
+				var tag = e.target.tagName.toLowerCase();
+				if (tag == 'span') {
+					link = $(el).getParent('a[class*=submit-dialog]');
+					if (link) {
+						var input = this.modal.pop.getElement('input[*=dialog-input]');
 						if (fn) fn.attempt(input.get('value'), this);
-						this.close();
 					}
-				}.bind(this));
-				(function(){
-					input.focus();
-					input.select();
-				}).delay(10);
-			}
-		},
-		onClick: function(e){
-			e.preventDefault();
-			var link = '';
-			var el = e.target;
-			var tag = e.target.tagName.toLowerCase();
-			if (tag == 'span') {
-				link = el.getParent('a[class*=submit-dialog]');
+				} else if (tag == 'a') {
+					if (document.id(e.target).hasClass('cancel-btn')) link = el;
+				}
 				if (link) {
-					var input = this.modal.pop.getElement('input[*=dialog-input]');
-					if (fn) fn.attempt(input.get('value'), this);
+					this.close();
 				}
-			} else if (tag == 'a') {
-				if (document.id(e.target).hasClass('cancel-btn')) link = el;
 			}
-			if (link) {
-				this.close();
-			}
-		}
-	}, dialog_class);
-};
-MooEditable.Actions.extend({
-
-	formatBlock: {
-		title: 'Paragraph',
-		type: 'button-overlay',
-		options: {
-			mode: 'text',
-			overlayHTML: (function(){
-				var html = '<p><a href="#">Paragraph</a></p><h1><a href="#">Heading 1</a></h1><h2><a href="#">Heading 2</a></h2><h3><a href="#">Heading 3</a></h3><h4><a href="#">Heading 4</a></h4>';
-				return html;
-			})()
-		},
-		command: function(buttonOverlay, e){
-			var el = e.target;
-			var tag = el.getParent().get('tag');
-			var argument = '<' + tag + '>';
-			
-			if (Browser.Engine.webkit) {
-				var node = this.selection.getNode();
-				if (node) {
-					var blks = ["p","h1","h2",'h3','h4','h5','h6','code','pre'];
-					var node_tag = node.nodeName.toLowerCase();
-					if (!blks.contains(node_tag)) {
-						blks.each(function(blk){ 
-							var parent_blk = node.getParent(blk);
-							if (parent_blk) {
-								node = parent_blk;
-							}
-						});			
+		}, dialog_class);
+	};
+	
+	
+	MooEditable.Actions.extend({
+	
+		formatBlock: {
+			title: 'Paragraph',
+			type: 'button-overlay',
+			options: {
+				mode: 'text',
+				overlayHTML: (function(){
+					var html = '<p><a href="#">Paragraph</a></p><h1><a href="#">Heading 1</a></h1><h2><a href="#">Heading 2</a></h2><h3><a href="#">Heading 3</a></h3><h4><a href="#">Heading 4</a></h4><h5><a href="#">Heading 5</a></h5><h6><a href="#">Heading 6</a></h6><pre><a href="#">Monospace</a></pre>';
+					return html;
+				})(),
+				overlaySize: {x: formatBlockOverlayWidth, y: 'auto'}
+			},
+			command: function(buttonOverlay, e){
+				var el = e.target;
+				var tag = $(el).getParent().get('tag');
+				var argument = '<' + tag + '>';
+//				this.selection.selectNode(this.selection.getNode());
+				
+				if (Browser.Engine.webkit) {
+					var node = this.selection.getNode();
+					if (node) {
+						var blks = ["p","h1","h2",'h3','h4','h5','h6','code','pre'];
+						var node_tag = node.nodeName.toLowerCase();
+						if (!blks.contains(node_tag)) {
+							blks.each(function(blk){ 
+								var parent_blk = node.getParent(blk);
+								if (parent_blk) {
+									node = parent_blk;
+								}
+							});			
+						}
+						node = $(node);
+						var new_blk = new Element(tag, {'html': node.get('html')}).inject(node,'before');
+						node.destroy(); 
 					}
-					var new_blk = new Element(tag, {'html': node.get('html')}).inject(node,'before');
-					node.destroy(); 
-				}
-			} else {
-				this.execute('formatBlock', false, argument);
-			}
-			this.focus();
-			buttonOverlay.overlayVisible = true;
-			buttonOverlay.closeOverlay();
-		}
-	},
-	
-	justifyleft:{
-		title: 'Align Left',
-		states: {
-			css: {'text-align': 'left'}
-		}
-	},
-	
-	justifyright:{
-		title: 'Align Right',
-		states: {
-			css: {'text-align': 'right'}
-		}
-	},
-	
-	justifycenter:{
-		title: 'Align Center',
-		states: {
-			tags: ['center'],
-			css: {'text-align': 'center'}
-		}
-	},
-	asc_unlink: {
-		title: 'Remove Hyperlink',
-		dialogs: {
-			alert: MooEditable.UI.AscAlertDialog.pass('No hyperlink was found to remove.')
-		},
-		command: function(){
-			var node = this.selection.getNode();
-			if (this.selection.isCollapsed() && (node.nodeName != 'A')){
-				this.dialogs.asc_unlink.alert.open();
-			} else {
-				if (this.selection.isCollapsed()) {
-					this.selection.selectNode(node);
-					this.execute('unlink', false, null);
-					this.selection.collapse();
 				} else {
-					this.execute('unlink', false, null);
+					this.execute('formatBlock', false, argument);
 				}
-			}
-		}
-	},
-	asc_createlink: {
-		title: 'Add Hyperlink',
-		options: {
-			shortcut: 'l'
-		},
-		states: {
-			tags: ['a']
-		},
-		dialogs: {
-			alert: MooEditable.UI.AscAlertDialog.pass('Please select the text you wish to hyperlink.'),
-			prompt: function(editor){
-				return MooEditable.UI.AscPromptDialog('Enter URL', 'Insert Link', function(url){
-					editor.execute('createlink', false, url.trim());
-				}, 'link');
+				this.focus();
+				buttonOverlay.overlayVisible = true;
+				buttonOverlay.closeOverlay();
 			}
 		},
-		command: function(){
-			var mode = 'text';
-			var linkFound = false;
-			var isCollapsed = this.selection.isCollapsed();
-			var node = this.selection.getNode();
-
-			if (node.nodeName == 'A') {
-				linkFound = true;
-			} else {
-				var parent_link = node.getParent('a');
-				if (parent_link) {
-					node = parent_link;
-					linkFound = true;
-				} else {
-					var firstChild = node.getFirst('a');
-					if (firstChild) {
-						if (node.tagName == 'A') {
-							node = firstChild;
-							linkFound = true;
+		snippets: {
+			title: 'Snippets',
+			type: 'button-overlay',
+			options: {
+				mode: 'text',
+				overlayHTML: (function(){
+					var data = ['Listen closely', 'As you may already know', "Now, I don't know about you", "Well, I've got news for you", "Let me explain", "And best of all", "In fact", "Here's the bottom line", "Now, I know what you're thinking", "<p><a href=\"http://www.acme-hardware.com/\">ACME Hardware</a> is at all times interested in providing you with the best possible user experience. Part of our service to you includes a strong commitment to your privacy as our customer. To that end, we endeavor to provide you with a safe, secure service and use our best efforts to ensure that the information you submit to us remains private and is used only for the expressed purposes of the Employment Center. The following statements provide additional details about our privacy commitment.</p>"];
+					if (data) {
+						var d = new Element('div');
+						data.each(function(blurb){
+							var b = new Element('div', {'class':'snip', 'html':blurb}).inject(d);
+						});
+						return d.get('html');
+					}
+				})(),
+				overlaySize: {x: 450, y: 'auto'}
+			},
+			command: function(buttonOverlay, e){
+				var text = '';
+				var el = $(e.target);
+				if (el) {
+					if ((el.get('tag') == 'div') && el.hasClass('snip')) {
+						text = el.get('html');
+					} else {
+						var parent = el.getParent('div[class=snip]');
+						if (parent) {
+							text = parent.get('html');
 						}
 					}
-				}				
-			}
-			if (linkFound)	{
-				var text = node.get('href');
-				this.selection.selectNode(node);
-				mode = 'link';
-			} else {
-				if (isCollapsed) {
-					this.dialogs.asc_createlink.alert.open();
-					return;
+					if (text) {
+						this.selection.insertContent(text);
+					}
 				} 
+				this.focus();
+				buttonOverlay.overlayVisible = true;
+				buttonOverlay.closeOverlay();
 			}
-			
-			this.selection.selectNode(node);
-			if (!linkFound && !isCollapsed) {
-				var text = this.selection.getText();
+		},
+				
+		justifyleft:{
+			title: 'Align Left',
+			states: {
+				css: {'text-align': 'left'}
 			}
-			
-			var url = /^(https?|ftp|rmtp|mms):\/\/(([A-Z0-9][A-Z0-9_-]*)(\.[A-Z0-9][A-Z0-9_-]*)+)(:(\d+))?\/?/i;
-			var prompt = this.dialogs.asc_createlink.prompt;
-			var input = prompt.modal.pop.getElement('.dialog-input');
-			if (input) {
-				if (url.test(text)) {	
-					input.set('value', text);
+		},
+		
+		justifyright:{
+			title: 'Align Right',
+			states: {
+				css: {'text-align': 'right'}
+			}
+		},
+		
+		justifycenter:{
+			title: 'Align Center',
+			states: {
+				tags: ['center'],
+				css: {'text-align': 'center'}
+			}
+		},
+		asc_unlink: {
+			title: 'Remove Hyperlink',
+			dialogs: {
+				alert: MooEditable.UI.AscAlertDialog.pass('No hyperlink was found to remove.')
+			},
+			command: function(){
+				var node = this.selection.getNode();
+				if (this.selection.isCollapsed() && (node.nodeName != 'A')){
+					this.dialogs.asc_unlink.alert.open(400);
 				} else {
-					input.set('value', 'http://');
+					if (this.selection.isCollapsed()) {
+						this.selection.selectNode(node);
+						this.execute('unlink', false, null);
+						this.selection.collapse();
+					} else {
+						this.execute('unlink', false, null);
+					}
 				}
 			}
-			prompt.open();
+		},
+		asc_createlink: {
+			title: 'Add Hyperlink',
+			options: {
+				shortcut: 'l'
+			},
+			states: function(el,editor) {
+				var item = this;
+				var a_found = false;
+				do {
+					if ($type(el) != 'element') break;
+					var tag = el.tagName.toLowerCase();
+					if (tag == 'a') {
+						this.activate(tag);
+						a_found = true;
+						var link_el = $(el);
+						break;
+					}
+				} while (el = el.parentNode);
+				var tip = AscLinkEditModal;
+				if (a_found) {
+					
+					tip.posRelativeEl = editor.iframe;
+				
+					var settings = {
+						'target':link_el,
+						'align':tip.auto_align(link_el, 'auto')
+					};
+					if (tip.options.place.se.trans=='fly')	{
+						$extend(tip.options.place.ss, settings);
+						tip.options.place.ss.offset = 25;
+					}
+					$extend(tip.options.place.se, settings);
+					$extend(tip.options.place.he, settings);
+					
+					tip.isShowing = false;
+					
+					var href = link_el.get('href');
+					var c = new Element('div');
+					var goto = new Element('p', {'html':'Go to ', 'class':'goto'}).inject(c);
+					if (href.length > 100) {
+						var link_text_to_show = href.substr(0,50) + "&hellip;";
+					} else {
+						var link_text_to_show = href;
+					}
+					var test_a = new Element('a', {'href':href, 'html':link_text_to_show, 'target':'_blank'}).inject(goto);
+					var edit_a = new Element('a', {'class':'edit', 'href':'#', 'html':'Edit link'}).inject(c);
+					var remove_a = new Element('a', {'class':'remove', 'href':'#', 'html':'Remove link'}).inject(c);
+					
+					tip.set_contents(c.get('html'), 'small', 'auto');
+					
+					tip.removeEvents('show');
+					tip.addEvent('show', function() {
+						var edit_a = this.pop.getElement('a[class=edit]');
+						edit_a.addEvent('click', function(e) {
+							e.preventDefault();
+							item.action(e);
+							tip.hide();							
+						});
+						
+						var remove_a = this.pop.getElement('a[class=remove]');
+						remove_a.addEvent('click', function(e) {
+							e.preventDefault();
+							var node = editor.selection.getNode();
+							if (editor.selection.isCollapsed()) {
+								editor.selection.selectNode(node);
+								editor.execute('unlink', false, null);
+								editor.selection.collapse();
+							} else {
+								editor.execute('unlink', false, null);
+							}
+							tip.hide();							
+						});
+						
+					}.bind(tip));
+					
+					tip.show();
+				} else {
+					if (tip.isShowing) {
+						tip.hide();
+					}
+				}
+			},
+			onScroll: function(editor) {
+				var tip = AscLinkEditModal;
+				tip.scrollRelativeEl = editor.doc.getScroll();
+				if (tip.isShowing) {
+					tip.hide();
+				}
+			},
+			command: function() {
+														
+				var mode = 'text';
+				var linkFound = false;
+				var isCollapsed = this.selection.isCollapsed();
+				var range = this.selection.getRange();
+				var node = this.selection.getNode();
+	
+				if (node.nodeName == 'A') {
+					linkFound = true;
+//						$('data').set('html', 'link found by itself');
+				} else {
+					var parent_link = node.getParent('a');
+					if (parent_link) {
+//						$('data').set('html', 'parent link found');
+						node = parent_link;
+						linkFound = true;
+					} else {
+						var firstChild = node.getFirst('a');
+						if (firstChild) {
+							if (node.tagName == 'A') {
+//								$('data').set('html', 'child link found');
+								node = firstChild;
+								linkFound = true;
+							}
+						}
+					}				
+				}
+				var href = '';
+				var email = '';
+				if (linkFound)	{
+					href = node.get('href').trim();
+					this.selection.selectNode(node);
+					mode = 'link';
+				} 			
+				
+				var link_html = '';
+				var submitBtnText = 'Edit Link';
+				var target_blank = false;
+				
+				if (linkFound) {
+					// a link was found so select the entire node for editing the link
+					this.selection.selectNode(node);
+					var link_el = $(node);
+					link_html = link_el.get('html');
+					if (link_el.get('target') == '_blank') {
+						target_blank = true;
+					}
+				} else {
+					if (isCollapsed) {
+						MooEditable.UI.AscAlertDialog('Select something to link.').open(400);
+						return;
+					} else {
+						link_html = this.selection.getText();
+					}
+				}
+								
+				if (link_html.length > 100) {
+					var link_text_to_show = link_html.substr(0,100) + "&hellip;";
+				} else {
+					var link_text_to_show = link_html;
+				}
+
+				var mailto_regexp = /^mailto:(?:[a-zA-Z0-9_'^&amp;/+-])+(?:\.(?:[a-zA-Z0-9_'^&amp;/+-])+)*@(?:(?:\[?(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?))\.){3}(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\]?)|(?:[a-zA-Z0-9-]+\.)+(?:[a-zA-Z]){2,}\.?)$/;
+				var email_regexp = /^(?:[a-zA-Z0-9_'^&amp;/+-])+(?:\.(?:[a-zA-Z0-9_'^&amp;/+-])+)*@(?:(?:\[?(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?))\.){3}(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\]?)|(?:[a-zA-Z0-9-]+\.)+(?:[a-zA-Z]){2,}\.?)$/;
+				
+				var url_regexp = /(http|ftp|https):\/\/[\w\-_]+(\.[\w\-_]+)+([\w\-\.,@?^=%&amp;:/~\+#]*[\w\-\@?^=%&amp;/~\+#])?/i;
+				var link_type = 'webpage';
+				if (!href.test(url_regexp)) {
+					if (href.test(mailto_regexp)) {
+						link_type = 'email';
+						submitBtnText = 'Edit Email Address';
+						email = href.substr(7);
+						href = email;
+					} else {
+						href = 'http://';
+						submitBtnText = 'Insert Link';
+					}	
+				}
+				
+				// build dialog form
+				
+				if (link_text_to_show) {
+					h3_str = 'Link "<b>' + link_text_to_show + '</b>" to &hellip;';
+				} else {
+					h3_str = 'Enter URL';
+				}	
+								
+				var d = new Element('div');
+				var c = new Element('form').inject(d);
+				var h3 = new Element('h3',{'html': h3_str}).inject(c);
+				
+				var link_type_row = new Element('div', {'class':'type'}).inject(c);
+				
+				var type_tabs = {
+					'webpage':'Webpage',
+					'email':'Email Address'
+				};
+				for (var ltype in type_tabs){
+					var ltype_attr = {'href':'#', 'class':ltype,'html':type_tabs[ltype]};
+					if (link_type == ltype) {
+						ltype_attr['class'] += " down";
+					}
+					var ltype_tab = new Element('a', ltype_attr).inject(link_type_row);
+				}
+				
+				// url textbox
+
+				var input_text = new Element('input', {
+					'type':'text', 
+					'class':'dialog-input'
+				}).inject(c);
+
+				var feedback = new Element('div',{'class':'fdbk right'}).inject(c);
+				var lblk = new Element('div', {'class':'left'}).inject(c);
+				
+				// attributes
+				
+				var attr_row = new Element('div', {'class':'attr'}).inject(lblk);
+				var blank_target_checkbox = new Element('input', {'type':'checkbox', 'name':'blank_target', 'id':'blank_target', 'class':'blank', 'styles': {'margin':0}}).inject(attr_row);
+				var blank_lbl = new Element('label',{'for':'blank_target', 'class':'blank', 'html': 'Have link open a new window', 'styles': {'margin':'0 0 0 5px'} }).inject(attr_row);
+				
+				// buttons
+				
+				var tbl = new Element('table', {'class':'btns'}).inject(lblk);
+				var tbody = new Element('tbody').inject(tbl);
+				var tr = new Element('tr').inject(tbody);
+				var td2 = new Element('td', {'class':'btns'} ).inject(tr);
+				var submit_btn_a = gen_btn(submitBtnText, 'form submit-dialog').inject(td2);
+				var td3 = new Element('td', {'class':'or', 'html':'or'}).inject(tr);
+				var td4 = new Element('td', {'class':'cancel'} ).inject(tr);
+				var cancel_a = new Element('a', {'href':'#', 'class': 'cancel-btn', 'html':'Cancel'}).inject(td4);
+
+				var clr = new Element('div',{'class':'clr'}).inject(c);
+				
+				var dialog_html = d.get('html');
+				
+				// function to process form
+				
+				var fn = function(els){
+					var url = els.url.get('value').trim();
+					if (url && (url != 'http://')) {
+						var link_attr = {'href':url};
+					
+						switch (els.link_type) {
+							case 'webpage':
+								if (els.blank_ckb.checked) {
+									link_attr['target'] = '_blank';
+								}
+								break;
+							case 'email':
+								link_attr['href'] = 'mailto:' + url;
+								break;
+						}
+						
+						if (linkFound)	{
+							// replace that link with a new one
+							link_attr.html = link_html;
+							var link = new Element('a', link_attr).inject(node,'before');
+							node.destroy(); 
+						} else {
+							// inserting link
+							if (isCollapsed) {
+								// nothing was selected, so just insert link using url as text
+								link_attr.html = url;
+							} else {
+								// some text was selected
+								link_attr.html = link_html;
+							}
+							var d = new Element('div');
+							var link = new Element('a', link_attr).inject(d);
+							var html = d.get('html');
+
+							this.selection.setRange(range);
+							this.selection.insertContent(html);
+						}
+					} else {
+						this.execute('unlink', false, null);
+					}
+					this.focus();
+				}.bind(this);
+					
+				// open dialog
 			
+				var dialog = new MooEditable.UI.AscDialog(dialog_html, {
+					onOpen: function(e){
+						if (this.els.url) {
+							(function(){
+								this.els.url.focus();
+								this.els.url.fireEvent('keydown',e);
+							}.bind(this)).delay(1,this);
+						}
+					},
+					onPreshow: function() {
+						this.modal.pop.removeEvents('click');
+						this.els = {
+							link_type: link_type,
+							web: href,
+							email: email,
+							url: this.modal.pop.getElement('input[class*=dialog-input]'),
+							attr: this.modal.pop.getElement('div[class=attr]'),
+							blank_ckb: this.modal.pop.getElement('input[class=blank]'),
+							blank_lbl: this.modal.pop.getElement('label[class=blank]'),
+							submit_btn: this.modal.pop.getElement('a[class*=submit-dialog]'),
+							cancel_btn: this.modal.pop.getElement('a[class=cancel-btn]'),
+							webpage_tab: this.modal.pop.getElement('a[class*=webpage]'),
+							email_tab: this.modal.pop.getElement('a[class*=email]'),
+							fdbk: this.modal.pop.getElement('div[class*=fdbk]')
+						};
+						// for some reason I was unable to set the input value when creating the el earlier
+						this.els.url.set('value', href);
+
+						this.els.url.addEvent('keyup', function(e) {
+							var url = this.els.url.get('value').trim();
+							this.els.fdbk.empty();
+							
+							switch (this.els.link_type) {
+								case 'webpage':
+									// if valid URL, then show test URL link
+									if (url.test(url_regexp)) {
+										var test_a = this.els.fdbk.getElement('a[id=test_link]');
+										if (test_a) {
+											test_a.set('href', url);
+										} else {
+											var test_a = new Element('a', {'id':'test_link', 'href':url, 'html':'Test this link', 'target':'_blank'}).inject(this.els.fdbk);
+										}											
+									}
+									break;
+								case 'email':
+									// test to see if this is a valid email address
+									if (url == '') {
+										this.els.fdbk.set('html', 'Enter an email address').removeClass('pass').removeClass('fail');
+									} else {
+										if (url.test(email_regexp)) {
+											this.els.fdbk.set('html', 'Valid email address').addClass('pass').removeClass('fail');
+										} else {
+											this.els.fdbk.set('html', 'Invalid email address').addClass('fail').removeClass('pass');
+											return;
+										}
+									}
+									break;
+							}
+						}.bind(this));
+						this.els.url.addEvent('keydown', function(e) {
+							if (e.key=='enter') {
+								e.preventDefault();
+								if (fn) fn.attempt(this.els, this);
+								this.close();
+							}
+						}.bind(this));
+						this.els.webpage_tab.addEvent('click', function(e) {
+							e.preventDefault();
+							if (!this.els.webpage_tab.hasClass('down')) {
+								this.els.link_type = 'webpage';
+								this.els.fdbk.empty();
+								this.email = this.els.url.get('value').trim();
+								this.els.url.set('value',this.web);												this.els.url.fireEvent('keyup',e);
+								this.els.url.focus();
+								this.els.webpage_tab.addClass('down');
+								this.els.email_tab.removeClass('down');
+								this.els.attr.setStyle('display', 'block');
+							} else {
+								this.els.webpage_tab.blur()
+							}
+						}.bind(this));
+
+						this.els.email_tab.addEvent('click', function(e) {
+							e.preventDefault();
+							if (!this.els.email_tab.hasClass('down')) {
+								this.els.link_type = 'email';
+								this.web = this.els.url.get('value').trim();
+								this.els.url.set('value',this.email);
+								this.els.url.fireEvent('keyup',e);
+								this.els.url.focus();
+								this.els.webpage_tab.removeClass('down');
+								this.els.email_tab.addClass('down');
+								this.els.attr.setStyle('display', 'none');
+							} else {
+								this.els.email_tab.blur()
+							}
+						}.bind(this));
+						
+						if (link_type == 'email') {
+							this.els.attr.setStyle('display', 'none');
+						}
+
+						this.els.submit_btn.addEvent('click', function(e) {
+							if (fn) fn.attempt(this.els, this);
+							this.close();
+						}.bind(this));
+						
+						this.els.cancel_btn.addEvent('click', this.close.bindWithEvent(this));
+						
+						if (target_blank)	{
+							this.els.blank_ckb.checked = true;
+						}
+					}
+				}, 'link');
+				
+				dialog.open(530);
+				
+			}
 		}
-	}
+	});	
 });

@@ -8,10 +8,12 @@
 			body{
 				font-family: sans-serif;
 				font-size: .9em;
+				text-align: center;
 			}
+			#page_container { width: 700px; margin: 0 auto; text-align: left;}
 			#textarea-1{
 				width: 700px;
-				height: 200px;
+				height: 400px;
 				padding: 10px;
 				border: 2px solid #ddd;
 			}
@@ -20,20 +22,24 @@
 
 		<link rel="stylesheet" type="text/css" href="Assets/MooEditable/MooEditable.css">
 		<link rel="stylesheet" type="text/css" href="Assets/MooEditable/Ascribe/MooEditable.css">
+		<!--[if lte IE 8]>
+			<link rel="stylesheet" type="text/css" href="Assets/MooEditable/Ascribe/ie.css">
+		<![endif]-->
+
 		<script type="text/javascript" src="Demos/assets/mootools.js"></script>
 		<script type="text/javascript" src="Source/Ascribe/moo.more.js"></script>
 		<script type="text/javascript" src="Source/MooEditable/MooEditable.js"></script>
+		
 		<script type="text/javascript" src="Source/Ascribe/MooEditable.UI.Ascribe.Dialog.js"></script>
 		
 
 		<script type="text/javascript">
 			window.addEvent('domready', function(){
+			
 				var editor = $('textarea-1').mooEditable({
-					actions: 'formatBlock | bold italic underline strikethrough | justifyleft justifycenter justifyright | insertunorderedlist insertorderedlist indent outdent | undo redo | asc_createlink asc_unlink | urlimage | toggleview'
+					actions: 'formatBlock snippets | bold italic underline | asc_createlink urlimage | insertunorderedlist insertorderedlist indent outdent | justifyleft justifycenter justifyright | toggleview'
 				});
-
-
-
+				
 				// Post submit
 				$('theForm').addEvent('submit', function(e){
 					alert($('textarea-1').value);
@@ -57,16 +63,39 @@
 
 	</head>
 	<body>
+		
+		<div id="page_container">
 
 		<h1>MooEditable - Ascribe fork</h1>
-		
-		<p>Integrates <a href="http://github.com/tru10000/Ascribe-Dialog/">Ascribe Dialog</a></p>
+			<p>Fork of <a href="http://cheeaun.github.com/mooeditable/">MooEditable</a> (MooTools powered WYSIWYG in-browser HTML editor) by <a href="http://cheeaun.com/">Lim Chee Aun<a> which integrates <a href="http://github.com/tru10000/Ascribe-Dialog/">Ascribe Dialog</a> and uses icons from <a href="http://www.famfamfam.com/">famfamfam</a> with <a href="http://wordpress.org/">WordPress</a>-inspired buttons.</p>
 
+		
+		
+		<h3>Demo</h3>
 		<form id="theForm" method="post" action="http://form-data.appspot.com/">
 
 			<label for="textarea-1">Textarea Label (click to focus editor)</label>
 			<textarea id="textarea-1" name="editable1">
-	<p><strong>This</strong> is <a href="http://www.google.com">cool</a>!</p>
+		<h3>Additions in this fork</h3>
+		<ul>
+		<li>Paragraph function uses button overlay with command customized so extra tags are not inserted when using <a href="http://www.google.com/search?q=safari+formatblock+buggy">Safari</a>.</li>
+		<li>Link function utilizes Ascribe Dialog and has the ability to detect when the cursor is in a link or whether a link is selected. Can detect links to an <a href="mailto:some-email-address@domain.com">email address</a>. Does on-the-fly email address validation. Clicking on a link in the editor will bring up a small "tooltip" menu ala <a href="http://mail.google.com/">Gmail</a> which allows the user to test, edit or remove the link.</li>
+		<li>Modified the <b>checkStates</b> function such that if a button's state attribute is a function, the function will pass the editor object as an argument along with the current node clicked upon in the editor. I needed the editor object to be passed along to a custom state function for the asc_createlink button to properly show and hide link tooltips.</li>
+		</ul>
+		<h3>Works in</h3>
+		<ul>
+		<li>Firefox</li>
+		<li>Internet Explorer</li>
+		<li>Webkit browsers (Safari, Chrome)</li>
+		</ul>
+		<h3>Issues yet to be resolved</h3>
+		<ul>
+		<li>Toggling between html and editor clears out all undo/redo history.</li>
+		<li>Find a way to internationalize it by allowing a script to supply strings.</li>
+		<li>When the content of the editor is taller than the editor window, the editor document scrolls, obviously. I added a <b>editorScroll</b> function to main MooEditable class to track when the user scrolls the editor in order that the little link tooltips will hide themselves upon scroll. However, the onScroll event doesn't seem to take in Internet Explorer.</b></li>
+		</ul>
+		
+				
 			</textarea>
 
 		<p>
@@ -79,6 +108,8 @@
 		</form>
 
 		<div id="data"></div>
-
+		
+		
+</div>
 	</body>
 </html>

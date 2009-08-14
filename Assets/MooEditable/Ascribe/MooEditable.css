@@ -1,14 +1,30 @@
-.mooeditable-ui-toolbar { padding: 0px; }
-.mooeditable-textarea { padding: 8px !important; }
-.mooeditable-ui-toolbar .mooeditable-ui-button.active,
-.mooeditable-ui-toolbar .mooeditable-ui-button.onActive, .mooeditable-ui-toolbar .mooeditable-ui-button:hover,
-.mooeditable-ui-toolbar .mooeditable-ui-button.hover{
-	border-radius: 3px; -moz-border-radius: 3px; -khtml-border-radius: 3px; -webkit-border-radius: 3px;
+.mooeditable-container{
+	border-color: #DFDFDF;
 }
-
+.mooeditable-ui-toolbar { padding: 1px 1px 2px 1px; background-color: #DFDFDF;  }
+.mooeditable-ui-toolbar .mooeditable-ui-button { margin: 1px; }
+.mooeditable-ui-toolbar .toolbar-separator { color: #EEEEEE; background-color: transparent;  }
+.mooeditable-textarea { padding: 8px !important; }
+.mooeditable-ui-toolbar .mooeditable-ui-button { 
+	border-radius: 3px; -moz-border-radius: 3px; -khtml-border-radius: 3px; -webkit-border-radius: 3px;
+	border: 1px solid #B2B2B2; padding: 2px 1px; 
+	background: url(btn-tool/bg.png) repeat-x 50% 0;
+}
+@media screen and (-webkit-min-device-pixel-ratio:0){
+	.mooeditable-ui-toolbar .mooeditable-ui-button { padding:3px 4px;}
+}
+.mooeditable-ui-toolbar .mooeditable-ui-button:hover, .mooeditable-ui-toolbar .mooeditable-ui-button.hover{
+	border-color: #777777;
+	background-position: 50% -100px;
+}
+.mooeditable-ui-toolbar .mooeditable-ui-button.active, .mooeditable-ui-toolbar .mooeditable-ui-button.onActive{
+	border-color: #777777;
+	background-position: 50% -50px;
+}
 .mooeditable-ui-toolbar .mooeditable-ui-button .button-icon{
 	background: transparent url(icons/16x16/sprite-editor.png) no-repeat 0 -8px;
 	_background-image: url(icons/16x16/sprite-editor.gif);
+	width: 16px; 
 }
 
 .mooeditable-ui-toolbar .bold-item .button-icon{ background-position: 0 0; } 
@@ -40,12 +56,30 @@
 .mooeditable-ui-toolbar .urlimage-item .button-icon{ background-position: 0 -304px; } 
 .mooeditable-ui-toolbar .urlfile-item .button-icon{ background-position: 0 -320px; } 
 
-.mooeditable-ui-button-overlay { opacity: 0.95; }
-.formatBlock-overlay .overlay-content { padding: 1px 3px; }
-.formatBlock-overlay p, .formatBlock-overlay h1, .formatBlock-overlay h2, .formatBlock-overlay h3, .formatBlock-overlay h4 { margin: 2px 0;}
-.formatBlock-overlay a { display: block; text-decoration: none; color: #222;  padding: 4px;  }
-.formatBlock-overlay a:hover { border: 0px solid white; background-color: white; color: black;  border-radius: 3px; -moz-border-radius: 3px; -khtml-border-radius: 3px; -webkit-border-radius: 3px; }
 
+.mooeditable-ui-button-overlay { opacity: 0.95; }
+.mooeditable-ui-button-overlay .overlay-content { padding: 1px 3px; text-align: left; }
+.mooeditable-ui-button-overlay .overlay-content a { text-decoration: none; color: #222; }
+.mooeditable-ui-button-overlay .overlay-content a:hover { text-decoration: none; border: 0px solid white; background-color: white; color: black;  border-radius: 3px; -moz-border-radius: 3px; -khtml-border-radius: 3px; -webkit-border-radius: 3px;  }
+
+.formatBlock-overlay p, .formatBlock-overlay h1, .formatBlock-overlay h2, .formatBlock-overlay h3, .formatBlock-overlay h4, .formatBlock-overlay h5, .formatBlock-overlay h6, .formatBlock-overlay pre { margin: 2px 0; white-space:nowrap; }
+.formatBlock-overlay a { display: block;  padding: 4px;  }
+
+.snippets-overlay .overlay-content { padding: 8px 3px; }
+.snippets-overlay div.snip {
+	display: block;
+	float: left;
+	padding: 3px; 
+	margin: 1px 5px 3px 1px;
+	line-height: 1.2;
+	cursor: pointer;
+}
+.snippets-overlay div.snip:hover {
+	background-color: white; color: black;  border-radius: 3px; -moz-border-radius: 3px; -khtml-border-radius: 3px; -webkit-border-radius: 3px; 
+}
+.snippets-overlay div.snip a { color: blue; }
+.snippets-overlay div.snip a:hover { text-decoration: underline; }
+.snippets-overlay div.snip p { margin: 0; }
 
 /*
 	for arrowed tooltip
@@ -53,58 +87,58 @@
 .AscMask {
 	background-color: black;
 }
-.TipPop {
+.LinkPop {
 	text-align: left; 
 	position: absolute;
 }
-.TipPop .grid {
+.LinkPop .grid {
 	width: 170px;
 	display: table;
 	border-collapse:collapse;border-spacing:0;padding:0;
 }
-.TipPop .grid tbody {
+.LinkPop .grid tbody {
 	margin:0;padding:0;
 }
-.TipPop .grid td {
+.LinkPop .grid td {
 	zoom:1;
 	margin:0;padding:0;
 }
-.TipPop .grid .nw {
+.LinkPop .grid .nw {
 	width: 4px; 
 	background: transparent url(dialog/tip/l.gif) no-repeat 0% 0%;
 }
-.TipPop .grid .ne {
+.LinkPop .grid .ne {
 	width: 4px; 
 	background: transparent url(dialog/tip/r.gif) no-repeat top right;
 }
-.TipPop .grid .sw {
+.LinkPop .grid .sw {
 	width: 4px; height: 4px;
 	background: transparent url(dialog/tip/l.gif) no-repeat bottom left;
 }
-.TipPop .grid .se {
+.LinkPop .grid .se {
 	width: 4px; height: 4px;
 	background: transparent url(dialog/tip/r.gif) no-repeat bottom right;
 }
-.TipPop .grid .north {
+.LinkPop .grid .north {
 	background: transparent url(dialog/tip/c.gif) repeat-x 0% 0%;
-	padding: 7px 7px 3px 7px; 
-	font-size: 92%;
+	padding: 5px 6px 0px 3px; 
+	font-size: 82%;
 	color: black;
 }
-.TipPop .grid .s {
+.LinkPop .grid .s {
 	height: 4px; 
 	background: transparent url(dialog/tip/c.gif) repeat-x 0% 100%;
 }
 
 
-.TipPop .TipClose { 
+.LinkPop .LinkClose { 
 	width: 16px;
 	height: 16px;
 	position: absolute;
-	top: 10px;
-	right: 12px;
+	top: -5px;
+	right: -5px;
 }
-.TipPop .TipClose a {
+.LinkPop .LinkClose a {
 	width: 16px;
 	height: 16px;
 	display: block;
@@ -112,48 +146,53 @@
 	filter:alpha(opacity=75);-moz-opacity:.75;opacity:.75;
 	z-index:10001;
 }
-.TipPop .TipClose a:hover {
+.LinkPop .LinkClose a:hover {
 	filter:alpha(opacity=100);-moz-opacity:1;opacity:1; 
 }
-.TipPop .north .mi {
+.LinkPop .north .mi {
 	background-repeat: no-repeat;
 	background-position: top left;
-	padding: 0 0 0 22px;
+	padding: 0;
 	margin: 2px 2px 2px 0;
 	min-height:16px;
+	text-align: left; 
 }
 
+.LinkPop .north .mi p { margin: 0 0 2px 0; }
+.LinkPop .north .mi a { margin: 0 4px 0 0; }
+.LinkPop .north .mi a.edit { font-weight: bold; color: black; }
+.LinkPop .north .mi a.remove { color: red; }
 
-.TipPop .p {
+
+.LinkPop .p {
 	position: absolute;
 	visibility: hidden;
 	z-index:10002;
 	background-repeat: no-repeat;
 	display: block;
 }
-.TipPop .ae {
+.LinkPop .ae {
 	height: 16px; width: 9px;
 	background-image: url(dialog/tip/ae.gif)!important;
 }
-.TipPop .aw {
+.LinkPop .aw {
 	height: 16px; width: 9px;
 	background-image: url(dialog/tip/aw.gif)!important;
 }
-.TipPop .an {
+.LinkPop .an {
 	width: 16px; height: 9px;
 	background-image: url(dialog/tip/an.gif)!important;
 }
-.TipPop .as {
+.LinkPop .as {
 	width: 16px; height: 9px;
 	background-image: url(dialog/tip/as.gif)!important;
 }
-
+label { cursor:pointer;}
 
 .ModalMask {
 	background-color: black;
 }
 .ModalPop {
-	width: 387px !important;
 	text-align: left; 
 	filter:alpha(opacity=100);-moz-opacity:1;opacity:1; 
 }
@@ -220,8 +259,9 @@
 .ModalPop .mi {
 	background-repeat: no-repeat;
 	background-position: top left;
-	padding: 0 15px 20px 75px;
-	margin: 0 15px 0px 5px;
+	padding: 0px 5px 10px 75px;
+	_padding-top: 5px;
+	margin: 0 5px 0px 5px;
 	min-height: 64px;
 }
 .ModalPop .alert .mi {
@@ -231,10 +271,52 @@
 	background-image: url(icons/64x64/link.png);
 }
 .ModalPop .link .mi input {
-	width: 250px;
-	font-size: 100%;
+	font-size: 118%;
+	margin:0;
 }
+.ModalPop .link .mi .type { padding: 0 0 0 7px; }
+.ModalPop .link .mi .type a {
+	font-size: 92%;
+	margin: 0 3px -1px 0;
+	padding: 2px 5px 3px 5px;
+	text-decoration: none;
+	display: inline-block;
+	border-width: 1px 1px 0 1px;
+	border-style: solid;
+	border-color: #B2B2B2;
+	border-radius: 3px; -moz-border-radius: 3px; -khtml-border-radius: 3px; -webkit-border-radius: 3px;
+	-moz-border-radius-bottomleft:0;
+-moz-border-radius-bottomright:0;
+-moz-border-radius-topleft:3px;
+-moz-border-radius-topright:3px;
+	background: url(btn-tool/bg.png) repeat-x 50% 0;
+	color: black;
+}
+.ModalPop .link .mi input.dialog-input { margin: 1px 1px 1px 2px; width: 400px; border: 1px solid #7F9DB9; padding: 2px; }
+.ModalPop .link .mi input.dialog-input:focus { border-width: 2px; margin: 0 0 0 1px; }
+.ModalPop .link .mi .type a:hover {
+	text-decoration: none;
+	background-position: 50% -100px;
+}
+.ModalPop .link .mi .type .down {
+	border-color: #777777;
+	background-position: 50% -50px;
+}
+.ModalPop .link .mi .attr, .ModalPop .link .mi .fdbk {
+	margin: 5px 0 3px 0;
+}
+.ModalPop .link .mi .attr .fdbk {
+	float: right;
+	text-align: right;
+}
+.left { float: left; }
+.right { float: right; }
+.fail { color: red; }
+.pass { color: green; }
+.cls { clear: both; }
+
 .ModalPop .mi table.btns {
+	float: left;
 	margin: 5px 0 0 0;
 }
 .ModalPop .mi table.btns td {
@@ -253,7 +335,8 @@
 }
 .ModalPop .mi h3 {
 	font-size: 140%;
-	margin: 6px 0 6px 0;
+	margin: 6px 0 6px 2px;
+	font-weight: normal;
 }
 .ModalPop .mi p.med {
 	font-size: 122%;

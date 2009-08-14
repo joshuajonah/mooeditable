@@ -1,0 +1,11 @@
+.LinkPop .grid .north {
+	padding: 5px 22px 0px 3px; 
+}
+
+.LinkPop .LinkClose { 
+	top: 4px;
+	right: 4px;
+}
+.LinkPop .LinkClose a { 
+	background-image: transparent url(dialog/tip/fileclose.gif) no-repeat 50% 50%;
+}
