@@ -200,7 +200,7 @@ var MooEditable = new Class({
 			mousedown: this.editorMouseDown.bind(this),
 			contextmenu: this.editorContextMenu.bind(this),
 			click: this.editorClick.bind(this),
-			dbllick: this.editorDoubleClick.bind(this),
+			dblclick: this.editorDoubleClick.bind(this),
 			keypress: this.editorKeyPress.bind(this),
 			keyup: this.editorKeyUp.bind(this),
 			keydown: this.editorKeyDown.bind(this),
@@ -285,6 +285,16 @@ var MooEditable = new Class({
 	},
 	
 	editorDoubleClick: function(e){
+		this.actions.each(function(action){
+			var item = this.toolbar.getItem(action);
+			if (item) {
+				var dblclick = MooEditable.Actions[action]['ondblclick'];
+				if ($type(dblclick) == 'function'){
+					dblclick.attempt(this);
+					return;
+				}
+			}
+		}.bind(this));
 		this.fireEvent('editorDoubleClick', [e, this]);
 	},
 	
