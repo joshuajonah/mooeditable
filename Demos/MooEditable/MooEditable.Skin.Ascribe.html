@@ -20,16 +20,16 @@
 		<link rel="stylesheet" type="text/css" href="../../Assets/MooEditable/MooEditable.css">
 		<link rel="stylesheet" type="text/css" href="../../Assets/MooEditable/Ascribe/MooEditable.css">
 		<script type="text/javascript" src="../assets/mootools.js"></script>
-		<script type="text/javascript" src="../../Source/Ascribe/moo.more.js"></script>
+		<script type="text/javascript" src="../assets/moo.more.js"></script>
 		<script type="text/javascript" src="../../Source/MooEditable/MooEditable.js"></script>
-		<script type="text/javascript" src="../../Source/MooEditable/MooEditable.Extras.js"></script>
-		<script type="text/javascript" src="../../Source/Ascribe/MooEditable.UI.Ascribe.Dialog.js"></script>
+		<script type="text/javascript" src="../../Source/MooEditable/MooEditable.UI.ButtonOverlay.js"></script>
+		<script type="text/javascript" src="../../Source/MooEditable/MooEditable.UI.Ascribe.Dialog.js"></script>
 		
 
 		<script type="text/javascript">
 			window.addEvent('domready', function(){
 				var mooeditable = $('textarea-1').mooEditable({
-					actions: 'formatBlock | bold italic underline strikethrough | justifyleft justifycenter justifyright | insertunorderedlist insertorderedlist indent outdent | undo redo | asc_createlink asc_unlink | urlimage | toggleview'
+					actions: 'formatBlock snippets | bold italic underline | asc_createlink urlimage | insertunorderedlist insertorderedlist indent outdent | justifyleft justifycenter justifyright | toggleview'
 				});
 
 
