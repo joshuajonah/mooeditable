@@ -588,11 +588,8 @@ var MooEditable = new Class({
 			source = source.replace(/<br ?\/?>\s*<\/(h1|h2|h3|h4|h5|h6|li|p)/gi, '</$1');
 
 			// Semantic conversion
-			source = source.replace(/<span style="font-weight: bold;">(.*)<\/span>/gi, '<strong>$1</strong>');
-			source = source.replace(/<span style="font-style: italic;">(.*)<\/span>/gi, '<em>$1</em>');
-			source = source.replace(/<b\b[^>]*>(.*?)<\/b[^>]*>/gi, '<strong>$1</strong>');
-			source = source.replace(/<i\b[^>]*>(.*?)<\/i[^>]*>/gi, '<em>$1</em>');
-			source = source.replace(/<u\b[^>]*>(.*?)<\/u[^>]*>/gi, '<span style="text-decoration: underline;">$1</span>');
+			source = source.replace(/<span style="font-weight: bold;">(.*)<\/span>/gi, '<b>$1</b>');
+			source = source.replace(/<span style="font-style: italic;">(.*)<\/span>/gi, '<i>$1</i>');
 
 			// Replace uppercase element names with lowercase
 			source = source.replace(/<[^> ]*/g, function(match){return match.toLowerCase();});
