@@ -47,9 +47,10 @@ var AscDialog = new Class({
 			'he': { trans:'fly', target:'window', io:1, align:'n', offset:0, margin:0 } // hide end
 		},
 		posRelative: null,
-		onHide: Class.empty,
-		onShow: Class.empty,
-		onFirstShow: Class.empty,
+		onPreShow: $empty,
+		onShow: $empty,
+		onFirstShow: $empty,
+		onHide: $empty,
 		transition: Fx.Transitions.Quad.easeInOut
 	},
 	initialize: function(options){
@@ -249,26 +250,31 @@ var AscDialog = new Class({
 		if (!an) {
 			['n','s','e','w'].each(function(d) {
 				var arrw = new Element('div',{ 'class':'a'+d+' p', 'styles': { 'visibility':'hidden'} }).inject(this.pop);
+				var styles = {};
+				var h = arrw.getStyle('height');
+				if (h) h = h.toInt();
+				var w = arrw.getStyle('width');
+				if (w) w = w.toInt();
 				switch (d) {
 					case 'n':
-						arrw.setStyles({
-							'bottom': 1 - arrw.getStyle('height').toInt(),
-							'top':'auto'
-						});
+						styles.top='auto';
+						if ($type(h)=='number') styles.bottom = 1 - h;
 						break;
 					case 's':
-						arrw.setStyle('top', 1 - arrw.getStyle('height').toInt());
+						if ($type(h)=='number') styles.top = 1 - h;
 						break;
 					case 'e':
-						arrw.setStyle('left', 1 - arrw.getStyle('width').toInt());
+						if ($type(w)=='number') styles.left = 1 - w;
 						break;
 					case 'w':
-						arrw.setStyle('right', 1 - arrw.getStyle('width').toInt());
+						if ($type(w)=='number') styles.right = 1 - w;
 						break;				
 				}
+				arrw.setStyles(styles);
 			}.bind(this));
 		}
 	},
+
 	show_arrow: function(io, align) {
 		if (!this.isIE6)	{
 			var arrw,p={top:0,left:0},a={},nsew='';
@@ -483,6 +489,7 @@ var AscDialog = new Class({
 		}
 	},
 	show: function() {
+		this.fireEvent('preshow', this);
 		if(!this.isShowing){
 
 			// set the starting position of the pop
@@ -920,30 +927,10 @@ var AscDialog = new Class({
 	}
 
 });
-
-window.addEvent('domready', function(){
-	
-	function gen_btn(str, cls, extra_cls){
-		var obj = { 'class': cls + ' ' + extra_cls, 'href':'#' };
-		var anchor = new Element('a', obj);
-		var s1 = new Element('span').inject(anchor);
-		var s2 = new Element('span').inject(s1);
-		var s3 = new Element('span', {'class':'s3'}).set('html',str).inject(s2);
-		return anchor;
-	};
-
-	var AscDialogModal = new AscDialog({
-		isModal: true,
-		addCloseBtn: false, 
-		popOpacity: .97,
-		speed:150,
-		classPrefix: 'Modal',
-		place: {
-			'se': { trans:'fade', target:'window', io:-1, align:'c', offset:0, margin:0 }, // show end
-			'he': { trans:'fade', target:'window', io:-1} // hide end
-		}
-	});
-	var AscLinkEditModal = new AscDialog({
+var AscStatesTooltip = new Class({
+	Implements: [Options,Events], 
+    Extends: AscDialog,
+ 	options: {
 		isModal: false,
 		addCloseBtn: true, 
 		useArrows: true,
@@ -953,7 +940,7 @@ window.addEvent('domready', function(){
 		showDelay: 0,
 		hideDelay: 0,
 		default_align:'auto',
-		classPrefix: 'Link',
+		classPrefix: 'Tip',
 		place: {
 			'ss': { 'io':1, offset:6 }, // show start
 			'se': { 'io':1, offset:6 }, // show end
@@ -969,13 +956,229 @@ window.addEvent('domready', function(){
 			} else {
 				this.posRelative = {x: 0, y: 0};
 			}
+		},
+		onPreshow: function(e) {
+			// this is to prevent double show of tip upon double click
+			if (this.allow_tip_show) {
+				this.suspend_tip_temporarily();
+			} else {
+				this.isShowing = true;
+			}
+		}
+
+	},
+	initialize: function(options){
+        this.parent(options);
+        this.allow_tip_show = true;
+	},
+	suspend_tip_temporarily: function(){
+       this.allow_tip_show = false;
+		$clear(this.timer);
+		this.timer = this.allow_tip.delay(500,this);
+	},
+	allow_tip: function(){
+		this.allow_tip_show = true;
+    },
+    target_to_el_in_iframe: function(el, iframe) {
+		this.posRelativeEl = iframe;
+		var settings = {
+			'target':el,
+			'align':this.auto_align(el, 'auto')
+		};
+		if (this.options.place.se.trans=='fly')	{
+			$extend(this.options.place.ss, settings);
+			this.options.place.ss.offset = 25;
+		}
+		$extend(this.options.place.se, settings);
+		$extend(this.options.place.he, settings); 
+    },
+    add_link_controls: function(c, href) {
+		var goto = new Element('p', {'html':'Go to ', 'class':'goto'}).inject(c);
+		if (href.length > 100) {
+			var link_text_to_show = href.substr(0,50) + "&hellip;";
+		} else {
+			var link_text_to_show = href;
+		}
+		var test_a = new Element('a', {'href':href, 'html':link_text_to_show, 'target':'_blank'}).inject(goto);
+		var edit_a = new Element('a', {'class':'edit-link', 'href':'#', 'html':'Edit link'}).inject(c);
+		var remove_a = new Element('a', {'class':'remove-link', 'href':'#', 'html':'Remove link'}).inject(c);
+		return c;
+    },
+    enable_link_controls: function(editor) {
+		var link_item = editor.toolbar.getItem('createlink');
+		this.pop.getElement('a[class=edit-link]').addEvent('click', function(e) {
+			e.preventDefault();
+			link_item.action(e);
+			this.hide();							
+		}.bind(this));
+		this.pop.getElement('a[class=remove-link]').addEvent('click', function(e) {
+			e.preventDefault();
+			var node = editor.selection.getNode();
+			if (editor.selection.isCollapsed()) {
+				editor.selection.selectNode(node);
+				editor.execute('unlink', false, null);
+				editor.selection.collapse();
+			} else {
+				editor.execute('unlink', false, null);
+			}
+			this.hide();							
+		}.bind(this));
+
+    },
+    add_img_controls: function(c, img_align) {
+		var tbl = new Element('table', {'class':'btns'}).inject(c);
+		var tbody = new Element('tbody').inject(tbl);
+		var tr = new Element('tr').inject(tbody);
+		var td1 = new Element('td', {'html': '<b>Align: </b>', 'styles':{'padding-right':5}} ).inject(tr);
+		var td2 = new Element('td', {'class':'btns'} ).inject(tr);
+
+		var img_align_options = {
+			'left':'Left',
+			'center':'Center',
+			'right':'Right',
+			'absmiddle':'Middle'
+		};
+		
+		var lcrm  = ['left','center','right','absmiddle'];
+		lcrm.each(function(x) {
+			var ia_attr = {'href':'#', 'class':'btn align-'+x,'title': "Align " + img_align_options[x]};
+			if (img_align == x) {
+				ia_attr['class'] += " down";
+			}
+			var btn = new Element('a', ia_attr).inject(td2);
+			var icon = new Element('div', {'class': 'icon'}).inject(btn);
+		});
+
+		var td3 = new Element('td', {'class':'or', 'html':'or'}).inject(tr);
+		var td4 = new Element('td', {'class':'cancel'} ).inject(tr);
+		var none_a = new Element('a', {'href':'#', 'class': 'none', 'html':'None'}).inject(td4);
+		
+		var edit_a = new Element('a', {'class':'edit-img', 'href':'#', 'html':'Edit image'}).inject(c);
+		var remove_a = new Element('a', {'class':'remove-img', 'href':'#', 'html':'Remove image'}).inject(c);
+		return c;
+    },
+    enable_img_controls: function(img_el, editor, range) {
+		var img_item = editor.toolbar.getItem('urlimage');
+		this.pop.getElement('a[class=edit-img]').addEvent('click', function(e) {
+			e.preventDefault();
+			img_item.action(e);
+			this.hide();							
+		}.bind(this));
+		this.pop.getElement('a[class=remove-img]').addEvent('click', function(e) {
+			e.preventDefault();
+			img_el.destroy();
+			editor.saveContent();
+			editor.selection.collapse();
+			this.hide();							
+		}.bind(this));
+		
+		['left','center','right','absmiddle'].each(function(x) {
+			this.pop.getElement('a[class*=align-'+x+']').addEvent('click', function(e) {
+				e.preventDefault();
+				img_el.set('align', x);
+				var styles={};
+				switch (x) {
+					case 'left':
+						styles={
+							'display':'block',
+							'margin':'0 .5em .3em 0',
+							'float':'left'
+						};									
+						break;
+					case 'center':
+						styles={
+							'display':'block',
+							'margin':'.5em auto',
+							'float':'none'
+						};									
+						break;
+					case 'right':
+						styles={
+							'display':'block',
+							'margin':'0 0 .3em .5em',
+							'float':'right'
+						};									
+						break;
+					case 'absmiddle':
+						styles={
+							'display':'inline',
+							'margin':'auto',
+							'float':'none'
+						};									
+						break;
+				}
+				img_el.setStyles(styles);
+				editor.selection.setRange(range);
+				this.hide();							
+			}.bind(this));
+		}.bind(this));
+		this.pop.getElement('a[class=none]').addEvent('click', function(e) {
+			e.preventDefault();
+			img_el.set('align', '');
+			img_el.setStyles({
+				'display':'inline',
+				'margin':'auto',
+				'float':'none'
+			});
+			editor.selection.setRange(range);
+			this.hide();							
+		}.bind(this));
+    },
+    el_img_child: function(el) {
+    	if ($type(el) != 'element') {
+    		el = $(el);
+    	}
+    	return el.getElement('img');    	
+    }
+});
+
+window.addEvent('domready', function(){
+	
+	function gen_btn(str, cls, extra_cls){
+		var obj = { 'class': cls + ' ' + extra_cls, 'href':'#' };
+		var anchor = new Element('a', obj);
+		var s1 = new Element('span').inject(anchor);
+		var s2 = new Element('span').inject(s1);
+		var s3 = new Element('span', {'class':'s3'}).set('html',str).inject(s2);
+		return anchor;
+	};
+	function randomString() {
+		var chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXTZabcdefghiklmnopqrstuvwxyz";
+		var string_length = 12;
+		var randomstring = '';
+		for (var i=0; i<string_length; i++) {
+			var rnum = Math.floor(Math.random() * chars.length);
+			randomstring += chars.substring(rnum,rnum+1);
+		}
+		return randomstring;
+	}
+
+	var AscDialogModal = new AscDialog({
+		isModal: true,
+		addCloseBtn: false, 
+		popOpacity: .97,
+		speed:150,
+		classPrefix: 'Modal',
+		place: {
+			'se': { trans:'fade', target:'window', io:-1, align:'c', offset:0, margin:0 }, // show end
+			'he': { trans:'fade', target:'window', io:-1} // hide end
 		}
 	});
+		
+	var AscTooltip = new AscStatesTooltip();
+	
+	// misc variables that really should be in the class somewhere
 	
 	var formatBlockOverlayWidth = 150;
 	if (Browser.Engine.trident) {
 		formatBlockOverlayWidth = 165;
 	}
+	var upload_ct = 0;
+	var max_file_size = 4194304;
+	var url_regexp = /(http|ftp|https):\/\/[\w\-_]+(\.[\w\-_]+)+([\w\-\.,@?^=%&amp;:/~\+#]*[\w\-\@?^=%&amp;/~\+#])?/i;
+	var mailto_regexp = /^mailto:(?:[a-zA-Z0-9_'^&amp;/+-])+(?:\.(?:[a-zA-Z0-9_'^&amp;/+-])+)*@(?:(?:\[?(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?))\.){3}(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\]?)|(?:[a-zA-Z0-9-]+\.)+(?:[a-zA-Z]){2,}\.?)$/;
+	var email_regexp = /^(?:[a-zA-Z0-9_'^&amp;/+-])+(?:\.(?:[a-zA-Z0-9_'^&amp;/+-])+)*@(?:(?:\[?(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?))\.){3}(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\]?)|(?:[a-zA-Z0-9-]+\.)+(?:[a-zA-Z]){2,}\.?)$/;
+				
 	
 	MooEditable.UI.AscDialog = new Class({
 	
@@ -1134,7 +1337,15 @@ window.addEvent('domready', function(){
 	
 	
 	MooEditable.Actions.extend({
-	
+		
+		toggleview: {
+			title: 'Toggle between rich text editor and source code',
+			command: function(){
+				(this.mode == 'textarea') ? this.toolbar.enable() : this.toolbar.disable('toggleview');
+				this.toggleView();
+				AscTooltip.hide();
+			}
+		},	
 		formatBlock: {
 			title: 'Paragraph',
 			type: 'button-overlay',
@@ -1240,27 +1451,243 @@ window.addEvent('domready', function(){
 				css: {'text-align': 'center'}
 			}
 		},
-		asc_unlink: {
-			title: 'Remove Hyperlink',
-			dialogs: {
-				alert: MooEditable.UI.AscAlertDialog.pass('No hyperlink was found to remove.')
+		urlimage: {
+			title: 'Add Image',
+			options: {
+				shortcut: 'm'
 			},
-			command: function(){
-				var node = this.selection.getNode();
-				if (this.selection.isCollapsed() && (node.nodeName != 'A')){
-					this.dialogs.asc_unlink.alert.open(400);
-				} else {
-					if (this.selection.isCollapsed()) {
-						this.selection.selectNode(node);
-						this.execute('unlink', false, null);
-						this.selection.collapse();
-					} else {
-						this.execute('unlink', false, null);
-					}
+			states: function(el,editor) {
+				var item = this;
+					// webkit can't detect an img when it is floating left or right, click will only grab the body tag
+				var tag = el.tagName.toLowerCase();
+				if (tag != 'img') {
+					return;
 				}
+				this.activate(tag);
+
+				var tip = AscTooltip;
+			
+				var img_el = $(el);
+				var range = editor.selection.getRange();
+				editor.selection.selectNode(el);
+				tip.target_to_el_in_iframe(img_el, editor.iframe);
+				
+				tip.isShowing = false;
+				
+				var img_align = img_el.get('align');
+				
+				var c = new Element('div');
+				c = tip.add_img_controls(c, img_align);
+				
+				if (el.parentNode.tagName == 'A') {
+				
+					var secondrow = new Element('div', {'class':'secondrow'}).inject(c);
+					secondrow = tip.add_link_controls(secondrow, $(el.parentNode).get('href').trim());
+				}
+
+				var html = c.get('html');
+				tip.set_contents(c.get('html'), 'small', 'auto');
+
+				tip.removeEvents('show');
+				tip.addEvent('show', function() {
+					tip.enable_img_controls(img_el, editor, range);								
+					if (el.parentNode.tagName == 'A') {
+						tip.enable_link_controls(editor);
+					}										
+				}.bind(tip));
+				
+				tip.show();
+			},
+			ondblclick: function(item, e) {
+				var el = this.selection.getNode();
+				if (!el) return;
+				var img_found = false;
+				do {
+					if ($type(el) != 'element') break;
+					var tag = el.tagName.toLowerCase();
+					if (tag == 'img') {
+						item.action(e);
+						return;
+					}
+				} while (el = el.parentNode);
+			},
+			command: function() {
+			
+				var img_found = false;
+				var isCollapsed = this.selection.isCollapsed();
+				var node = this.selection.getNode();
+				var src = '';
+				var alt = '';
+				var img_type = 'src';
+	
+				var submitBtnText = 'Add Image';
+				var h3txt = 'Add an image';
+				
+				if (node.nodeName == 'IMG') {
+					img_found = true;
+					// editing existing image
+					var img_el = $(node);
+					src = img_el.get('src').trim();
+					alt = img_el.get('alt');
+					if (alt) alt = alt.trim();
+					submitBtnText = 'Edit Image';
+					h3txt = 'Edit this image';
+					
+				}
+				
+				// build dialog form
+				// insert img (1) via src, (2) upload, (3) albums
+				
+				var d = new Element('div');
+				var c = new Element('div').inject(d);
+				var h3 = new Element('h3',{'html': h3txt}).inject(c);
+				
+				var img_type_row = new Element('div', {'class':'tab_bar'}).inject(c);
+
+				// url textbox
+
+				var url_tab = new Element('div', {'class':'tab src-blk'}).inject(c);
+				var src_lbl = new Element('label',{'for':'img_src', 'html': 'Image URL' }).inject(url_tab);
+				var input_text = new Element('input', {
+					'type':'text', 
+					'id':'img_src', 
+					'class':'dialog-input'
+				}).inject(url_tab);
+				var feedback = new Element('div',{'class':'fdbk right'}).inject(url_tab);
+				var lblk = new Element('div', {'class':'left'}).inject(url_tab);
+				
+				// attributes
+				
+				var attr_row = new Element('div', {'class':'attr'}).inject(lblk);
+				var alt_lbl = new Element('label',{'for':'img_alt', 'html': 'Image tooltip text'}).inject(attr_row);
+				var alt_text = new Element('input', {
+					'type':'text', 
+					'id':'img_alt', 
+					'class':'img-alt'
+				}).inject(attr_row);
+				
+				// buttons
+				
+				var tbl = new Element('table', {'class':'btns'}).inject(lblk);
+				var tbody = new Element('tbody').inject(tbl);
+				var tr = new Element('tr').inject(tbody);
+				var td2 = new Element('td', {'class':'btns'} ).inject(tr);
+				var submit_btn_a = gen_btn(submitBtnText, 'form submit-dialog').inject(td2);
+				var td3 = new Element('td', {'class':'or', 'html':'or'}).inject(tr);
+				var td4 = new Element('td', {'class':'cancel'} ).inject(tr);
+				var cancel_a = new Element('a', {'href':'#', 'class': 'cancel-btn', 'html':'Cancel'}).inject(td4);
+
+				var clr = new Element('div',{'class':'clr'}).inject(url_tab);	
+								
+				var dialog_html = d.get('html');
+								
+				// function to process form
+				
+				var fn = function(els){
+					var src = els.src.get('value').trim();
+					var alt = els.alt.get('value').trim();
+					if (src != '') {
+							
+						if (img_found)	{
+							// edit the old image
+							img_el.set('src',src);
+							img_el.set('alt',alt);
+						} else {
+							// insert new image
+							
+							var img_attr = {'src':src};
+							if (alt) img_attr.alt = alt;
+							
+							var d = new Element('div');
+							var img = new Element('img', img_attr).inject(d);
+							var html = d.get('html');
+							this.selection.insertContent(html);
+
+							/*
+							this.execute('insertimage', false, src);
+							
+							var s = this.selection.getSelection();
+							
+							var range = s.getRangeAt(0);
+							var oElement = range.startContainer.childNodes[range.startOffset-1];
+							s = this.selection.getSelection();
+							range = s.createRange();
+							range.selectNodeContents(oElement);
+							s.removeAllRanges();
+							s.addRange(range);
+							
+							alert(oElement.nodeName);
+
+							if (oElement.nodeName == 'IMG') {
+								img_el = oElement;
+							}
+							*/
+							
+						}
+					} else {
+						if (img_found) img_el.destroy();
+					}
+					this.focus();
+				}.bind(this);
+				
+				// open dialog
+			
+				var dialog = new MooEditable.UI.AscDialog(dialog_html, {
+					onOpen: function(e){
+						if ((img_type=='src') && this.els.src) {
+							(function(){
+								this.els.src.focus();
+							}.bind(this)).delay(1,this);
+						}
+						AscTooltip.hide();		
+					},
+					onPreshow: function(e) {
+						this.modal.pop.removeEvents('click');
+						this.els = {
+							img_type: img_type,
+							cancel_upload_btn: this.modal.pop.getElement('a[class$=upload_cancel]'),
+							attr: this.modal.pop.getElement('div[class=attr]'),
+							submit_btn: this.modal.pop.getElement('a[class*=submit-dialog]'),
+							cancel_btn: this.modal.pop.getElement('a[class=cancel-btn]'),
+							fdbk: this.modal.pop.getElement('div[class*=fdbk]'),
+							src_blk: this.modal.pop.getElement('div[class$=src-blk]')
+						};
+						this.els.src = this.els.src_blk.getElement('input[class=dialog-input]');
+						this.els.alt = this.els.src_blk.getElement('input[class=img-alt]');
+
+						// for some reason I was unable to set the input value when creating the el earlier
+						this.els.src.set('value', src);
+						this.els.alt.set('value', alt);
+						
+						this.els.submit_btn.addEvent('click', function(e) {
+							if (fn) fn.attempt(this.els, this);
+							this.close();
+						}.bind(this));
+						
+						this.els.cancel_btn.addEvent('click', this.close.bindWithEvent(this));
+						this.els.src.addEvent('keydown', function(e) {
+							if (e.key=='enter') {
+								e.preventDefault();
+								if (fn) fn.attempt(this.els, this);
+								this.close();
+							}
+						}.bind(this));
+						this.els.alt.addEvent('keydown', function(e) {
+							if (e.key=='enter') {
+								e.preventDefault();
+								if (fn) fn.attempt(this.els, this);
+								this.close();
+							}
+						}.bind(this));
+						
+					}
+				}, 'img');
+				
+				dialog.open(530);
+				
 			}
 		},
-		asc_createlink: {
+		createlink: {
 			title: 'Add Hyperlink',
 			options: {
 				shortcut: 'l'
@@ -1268,82 +1695,76 @@ window.addEvent('domready', function(){
 			states: function(el,editor) {
 				var item = this;
 				var a_found = false;
+				var i = 0;
 				do {
-					if ($type(el) != 'element') break;
-					var tag = el.tagName.toLowerCase();
-					if (tag == 'a') {
-						this.activate(tag);
-						a_found = true;
-						var link_el = $(el);
-						break;
+					if (i < 5) {
+						if ($type(el) != 'element') break;
+						var tag = el.tagName.toLowerCase();
+						if (tag == 'a') {
+							this.activate(tag);
+							a_found = true;
+							var link_el = $(el);
+							break;
+						}
 					}
+					i++;
 				} while (el = el.parentNode);
-				var tip = AscLinkEditModal;
+				var tip = AscTooltip;
 				if (a_found) {
 					
-					tip.posRelativeEl = editor.iframe;
-				
-					var settings = {
-						'target':link_el,
-						'align':tip.auto_align(link_el, 'auto')
-					};
-					if (tip.options.place.se.trans=='fly')	{
-						$extend(tip.options.place.ss, settings);
-						tip.options.place.ss.offset = 25;
-					}
-					$extend(tip.options.place.se, settings);
-					$extend(tip.options.place.he, settings);
+					tip.target_to_el_in_iframe(link_el, editor.iframe);
 					
 					tip.isShowing = false;
 					
 					var href = link_el.get('href');
 					var c = new Element('div');
-					var goto = new Element('p', {'html':'Go to ', 'class':'goto'}).inject(c);
-					if (href.length > 100) {
-						var link_text_to_show = href.substr(0,50) + "&hellip;";
+					var range = editor.selection.getRange();
+				
+					// show img controls if this link contains an image
+					var img_el = tip.el_img_child(link_el);
+					if (img_el) {
+						c = tip.add_img_controls(c, img_align);
+						var secondrow = new Element('div', {'class':'secondrow'}).inject(c);
+						secondrow = tip.add_link_controls(secondrow, href);
+						
 					} else {
-						var link_text_to_show = href;
+						c = tip.add_link_controls(c, href);
 					}
-					var test_a = new Element('a', {'href':href, 'html':link_text_to_show, 'target':'_blank'}).inject(goto);
-					var edit_a = new Element('a', {'class':'edit', 'href':'#', 'html':'Edit link'}).inject(c);
-					var remove_a = new Element('a', {'class':'remove', 'href':'#', 'html':'Remove link'}).inject(c);
-					
 					tip.set_contents(c.get('html'), 'small', 'auto');
 					
 					tip.removeEvents('show');
 					tip.addEvent('show', function() {
-						var edit_a = this.pop.getElement('a[class=edit]');
-						edit_a.addEvent('click', function(e) {
-							e.preventDefault();
-							item.action(e);
-							tip.hide();							
-						});
-						
-						var remove_a = this.pop.getElement('a[class=remove]');
-						remove_a.addEvent('click', function(e) {
-							e.preventDefault();
-							var node = editor.selection.getNode();
-							if (editor.selection.isCollapsed()) {
-								editor.selection.selectNode(node);
-								editor.execute('unlink', false, null);
-								editor.selection.collapse();
-							} else {
-								editor.execute('unlink', false, null);
-							}
-							tip.hide();							
-						});
-						
+						if (el.firstChild.nodeName == 'IMG') {
+							tip.enable_img_controls(img_el, editor, range);
+						}
+						tip.enable_link_controls(editor);						
 					}.bind(tip));
 					
 					tip.show();
+					
 				} else {
 					if (tip.isShowing) {
 						tip.hide();
 					}
 				}
+			
+			},
+			ondblclick: function(item, e) {
+				var el = this.selection.getNode();
+				if (!el) return;
+				var a_found = false;
+				do {
+					if ($type(el) != 'element') break;
+					var tag = el.tagName.toLowerCase();
+					if (tag == 'a') {
+						item.action(e);
+						return;
+					}
+				} while (el = el.parentNode);
+
 			},
 			onScroll: function(editor) {
-				var tip = AscLinkEditModal;
+				var tip = AscTooltip;
 				tip.scrollRelativeEl = editor.doc.getScroll();
 				if (tip.isShowing) {
 					tip.hide();
@@ -1354,44 +1775,37 @@ window.addEvent('domready', function(){
 				var mode = 'text';
 				var linkFound = false;
 				var isCollapsed = this.selection.isCollapsed();
-				var range = this.selection.getRange();
 				var node = this.selection.getNode();
-	
-				if (node.nodeName == 'A') {
-					linkFound = true;
-//						$('data').set('html', 'link found by itself');
-				} else {
-					var parent_link = node.getParent('a');
-					if (parent_link) {
-//						$('data').set('html', 'parent link found');
-						node = parent_link;
-						linkFound = true;
-					} else {
-						var firstChild = node.getFirst('a');
-						if (firstChild) {
-							if (node.tagName == 'A') {
-//								$('data').set('html', 'child link found');
-								node = firstChild;
-								linkFound = true;
-							}
-						}
-					}				
-				}
-				var href = '';
-				var email = '';
-				if (linkFound)	{
-					href = node.get('href').trim();
-					this.selection.selectNode(node);
-					mode = 'link';
-				} 			
+				var original_node = node;
 				
+				var el = node;
+
+				var i = 0;
+				do {
+					if (i < 5) {
+						if ($type(el) != 'element') break;
+						var tag = el.tagName.toLowerCase();
+						if (i==0) var original_tag = tag;
+						if (tag == 'a') {
+							linkFound = true;
+							node = $(el);
+							break;
+						}
+					}
+					i++;
+				} while (el = el.parentNode);
+
+				var href = 'http://';
+				var email = '';
 				var link_html = '';
 				var submitBtnText = 'Edit Link';
 				var target_blank = false;
 				
 				if (linkFound) {
 					// a link was found so select the entire node for editing the link
+					href = node.get('href').trim();
 					this.selection.selectNode(node);
+					mode = 'link';
 					var link_el = $(node);
 					link_html = link_el.get('html');
 					if (link_el.get('target') == '_blank') {
@@ -1402,20 +1816,61 @@ window.addEvent('domready', function(){
 						MooEditable.UI.AscAlertDialog('Select something to link.').open(400);
 						return;
 					} else {
-						link_html = this.selection.getText();
+						if (original_node && (original_tag == 'img')) {
+							var img = original_node.clone();
+							if (img) {
+								var d = new Element('div').grab(img);
+								linkhtml = d.get('html');
+								d.destroy();
+								img.destroy();
+							}
+						} else {
+							link_html = this.selection.getText();
+						}
 					}
 				}
-								
-				if (link_html.length > 100) {
-					var link_text_to_show = link_html.substr(0,100) + "&hellip;";
-				} else {
-					var link_text_to_show = link_html;
-				}
-
-				var mailto_regexp = /^mailto:(?:[a-zA-Z0-9_'^&amp;/+-])+(?:\.(?:[a-zA-Z0-9_'^&amp;/+-])+)*@(?:(?:\[?(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?))\.){3}(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\]?)|(?:[a-zA-Z0-9-]+\.)+(?:[a-zA-Z]){2,}\.?)$/;
-				var email_regexp = /^(?:[a-zA-Z0-9_'^&amp;/+-])+(?:\.(?:[a-zA-Z0-9_'^&amp;/+-])+)*@(?:(?:\[?(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?))\.){3}(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\]?)|(?:[a-zA-Z0-9-]+\.)+(?:[a-zA-Z]){2,}\.?)$/;
 				
-				var url_regexp = /(http|ftp|https):\/\/[\w\-_]+(\.[\w\-_]+)+([\w\-\.,@?^=%&amp;:/~\+#]*[\w\-\@?^=%&amp;/~\+#])?/i;
+				var link_text_to_show = '';
+				
+				if (link_html) {
+					// if this contains images, show thumb (max 50px) and remove any alignment
+					if (link_html.toLowerCase().contains('<img')) {
+						var thumb_px = 50;
+						var tmp = new Element('div', {'styles':{'position':'absolute','left':-99999,'top':0}, 'html':link_html}).inject(document.body);
+						var imgs = tmp.getElements('img');
+						if (imgs) {
+							imgs.each(function(img) {
+								var sz = img.getSize();
+								img.erase('styles');
+								img.erase('align');
+								if ((sz.x > thumb_px) || (sz.y > thumb_px)) {
+									if (sz.y > thumb_px) {
+										img.set('height', thumb_px);
+										var thumb_w = (sz.x * (thumb_px / sz.y)).toInt();
+										if (thumb_w > 100) thumb_w = 100;
+										img.set('width', thumb_w);
+									} else if (sz.x > thumb_px) {
+										img.set('width', thumb_px);
+										var thumb_h = (sz.y * (thumb_px / sz.x)).toInt();
+										if (thumb_h > 100) thumb_h = 100;
+										img.set('height', thumb_h);
+									}
+								}
+							});
+						}
+						link_text_to_show = tmp.get('html');
+						tmp.destroy();
+					} else {
+						if (link_html.length > 100) {
+							link_text_to_show = link_html.substr(0,100) + "&hellip;";
+						} else {
+							link_text_to_show = link_html;
+						}
+					}
+				}
+				
+								
+
 				var link_type = 'webpage';
 				if (!href.test(url_regexp)) {
 					if (href.test(mailto_regexp)) {
@@ -1424,7 +1879,6 @@ window.addEvent('domready', function(){
 						email = href.substr(7);
 						href = email;
 					} else {
-						href = 'http://';
 						submitBtnText = 'Insert Link';
 					}	
 				}
@@ -1432,7 +1886,7 @@ window.addEvent('domready', function(){
 				// build dialog form
 				
 				if (link_text_to_show) {
-					h3_str = 'Link "<b>' + link_text_to_show + '</b>" to &hellip;';
+					h3_str = 'Link <b>' + link_text_to_show + '</b> to &hellip;';
 				} else {
 					h3_str = 'Enter URL';
 				}	
@@ -1441,7 +1895,7 @@ window.addEvent('domready', function(){
 				var c = new Element('form').inject(d);
 				var h3 = new Element('h3',{'html': h3_str}).inject(c);
 				
-				var link_type_row = new Element('div', {'class':'type'}).inject(c);
+				var link_type_row = new Element('div', {'class':'tab_bar'}).inject(c);
 				
 				var type_tabs = {
 					'webpage':'Webpage',
@@ -1491,40 +1945,38 @@ window.addEvent('domready', function(){
 				var fn = function(els){
 					var url = els.url.get('value').trim();
 					if (url && (url != 'http://')) {
-						var link_attr = {'href':url};
 					
-						switch (els.link_type) {
-							case 'webpage':
-								if (els.blank_ckb.checked) {
-									link_attr['target'] = '_blank';
-								}
-								break;
-							case 'email':
-								link_attr['href'] = 'mailto:' + url;
-								break;
+						if (els.link_type == 'email') {
+							url = 'mailto:' + url;
 						}
 						
 						if (linkFound)	{
-							// replace that link with a new one
-							link_attr.html = link_html;
-							var link = new Element('a', link_attr).inject(node,'before');
-							node.destroy(); 
-						} else {
-							// inserting link
-							if (isCollapsed) {
-								// nothing was selected, so just insert link using url as text
-								link_attr.html = url;
-							} else {
-								// some text was selected
-								link_attr.html = link_html;
+							// edit the existing link
+							node.set('href', url);
+							if (els.link_type == 'webpage') {
+								if (els.blank_ckb.checked) {
+									var target = '_blank';
+								} else {
+									var target = '';
+								}
+								node.set('target', target);
 							}
-							var d = new Element('div');
-							var link = new Element('a', link_attr).inject(d);
-							var html = d.get('html');
-
-							this.selection.setRange(range);
-							this.selection.insertContent(html);
+						} else {
+						
+							// insert a link with a random string as href
+							var rs = randomString();
+							this.execute('createlink', false, rs);
+							// then look for the link with the random href and replace with correct one
+							node = this.doc.body.getElement('a[href='+rs+']');
+							if (node) {
+								node.set('href', url);
+								if ((els.link_type == 'webpage') && els.blank_ckb.checked) {
+									node.set('target', '_blank');
+								}
+							} 
+							
 						}
+
 					} else {
 						this.execute('unlink', false, null);
 					}
@@ -1539,6 +1991,7 @@ window.addEvent('domready', function(){
 							(function(){
 								this.els.url.focus();
 								this.els.url.fireEvent('keydown',e);
+								AscTooltip.hide();
 							}.bind(this)).delay(1,this);
 						}
 					},
@@ -1554,8 +2007,10 @@ window.addEvent('domready', function(){
 							blank_lbl: this.modal.pop.getElement('label[class=blank]'),
 							submit_btn: this.modal.pop.getElement('a[class*=submit-dialog]'),
 							cancel_btn: this.modal.pop.getElement('a[class=cancel-btn]'),
-							webpage_tab: this.modal.pop.getElement('a[class*=webpage]'),
-							email_tab: this.modal.pop.getElement('a[class*=email]'),
+							tabs: {
+								webpage: this.modal.pop.getElement('a[class*=webpage]'),
+								email: this.modal.pop.getElement('a[class*=email]')
+							},
 							fdbk: this.modal.pop.getElement('div[class*=fdbk]')
 						};
 						// for some reason I was unable to set the input value when creating the el earlier
@@ -1599,35 +2054,36 @@ window.addEvent('domready', function(){
 								this.close();
 							}
 						}.bind(this));
-						this.els.webpage_tab.addEvent('click', function(e) {
+						this.els.tabs.webpage.addEvent('click', function(e) {
 							e.preventDefault();
-							if (!this.els.webpage_tab.hasClass('down')) {
+							if (!this.els.tabs.webpage.hasClass('down')) {
 								this.els.link_type = 'webpage';
 								this.els.fdbk.empty();
 								this.email = this.els.url.get('value').trim();
-								this.els.url.set('value',this.web);												this.els.url.fireEvent('keyup',e);
+								this.els.url.set('value',this.web);												
+								this.els.url.fireEvent('keyup',e);
 								this.els.url.focus();
-								this.els.webpage_tab.addClass('down');
-								this.els.email_tab.removeClass('down');
+								this.els.tabs.webpage.addClass('down');
+								this.els.tabs.email.removeClass('down');
 								this.els.attr.setStyle('display', 'block');
 							} else {
-								this.els.webpage_tab.blur()
+								this.els.tabs.webpage.blur()
 							}
 						}.bind(this));
 
-						this.els.email_tab.addEvent('click', function(e) {
+						this.els.tabs.email.addEvent('click', function(e) {
 							e.preventDefault();
-							if (!this.els.email_tab.hasClass('down')) {
+							if (!this.els.tabs.email.hasClass('down')) {
 								this.els.link_type = 'email';
 								this.web = this.els.url.get('value').trim();
 								this.els.url.set('value',this.email);
 								this.els.url.fireEvent('keyup',e);
 								this.els.url.focus();
-								this.els.webpage_tab.removeClass('down');
-								this.els.email_tab.addClass('down');
+								this.els.tabs.webpage.removeClass('down');
+								this.els.tabs.email.addClass('down');
 								this.els.attr.setStyle('display', 'none');
 							} else {
-								this.els.email_tab.blur()
+								this.els.tabs.email.blur()
 							}
 						}.bind(this));
 						

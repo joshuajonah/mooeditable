@@ -5,22 +5,25 @@
 .mooeditable-ui-toolbar .mooeditable-ui-button { margin: 1px; }
 .mooeditable-ui-toolbar .toolbar-separator { color: #EEEEEE; background-color: transparent;  }
 .mooeditable-textarea { padding: 8px !important; }
-.mooeditable-ui-toolbar .mooeditable-ui-button { 
+
+.mooeditable-ui-toolbar .mooeditable-ui-button, .TipPop .mi .btn { 
 	border-radius: 3px; -moz-border-radius: 3px; -khtml-border-radius: 3px; -webkit-border-radius: 3px;
 	border: 1px solid #B2B2B2; padding: 2px 1px; 
 	background: url(btn-tool/bg.png) repeat-x 50% 0;
 }
-@media screen and (-webkit-min-device-pixel-ratio:0){
-	.mooeditable-ui-toolbar .mooeditable-ui-button { padding:3px 4px;}
+@media screen and (-webkit-min-device-pixel-ratio:0) {
+	.mooeditable-ui-toolbar .mooeditable-ui-button, .TipPop .mi a.btn { padding:3px 4px;}
 }
-.mooeditable-ui-toolbar .mooeditable-ui-button:hover, .mooeditable-ui-toolbar .mooeditable-ui-button.hover{
+.mooeditable-ui-toolbar .mooeditable-ui-button:hover, .mooeditable-ui-toolbar .mooeditable-ui-button.hover, .TipPop .mi a.btn:hover {
 	border-color: #777777;
 	background-position: 50% -100px;
 }
-.mooeditable-ui-toolbar .mooeditable-ui-button.active, .mooeditable-ui-toolbar .mooeditable-ui-button.onActive{
+.mooeditable-ui-toolbar .mooeditable-ui-button.active, .mooeditable-ui-toolbar .mooeditable-ui-button.onActive, .TipPop .mi a.active {
 	border-color: #777777;
 	background-position: 50% -50px;
 }
+
+
 .mooeditable-ui-toolbar .mooeditable-ui-button .button-icon{
 	background: transparent url(icons/16x16/sprite-editor.png) no-repeat 0 -8px;
 	_background-image: url(icons/16x16/sprite-editor.gif);
@@ -53,7 +56,7 @@
 .mooeditable-ui-toolbar .subscript-item .button-icon{ background-position: 0 -288px; } 
 .mooeditable-ui-toolbar .superscript-item .button-icon{ background-position: 0 -320px; } 
 
-.mooeditable-ui-toolbar .urlimage-item .button-icon{ background-position: 0 -304px; } 
+.mooeditable-ui-toolbar .urlimage-item .button-icon, .mooeditable-ui-toolbar .asc_insertimage-item .button-icon { background-position: 0 -304px; } 
 .mooeditable-ui-toolbar .urlfile-item .button-icon{ background-position: 0 -320px; } 
 
 
@@ -87,58 +90,58 @@
 .AscMask {
 	background-color: black;
 }
-.LinkPop {
+.TipPop {
 	text-align: left; 
 	position: absolute;
 }
-.LinkPop .grid {
+.TipPop .grid {
 	width: 170px;
 	display: table;
 	border-collapse:collapse;border-spacing:0;padding:0;
 }
-.LinkPop .grid tbody {
+.TipPop .grid tbody {
 	margin:0;padding:0;
 }
-.LinkPop .grid td {
+.TipPop .grid td {
 	zoom:1;
 	margin:0;padding:0;
 }
-.LinkPop .grid .nw {
+.TipPop .grid .nw {
 	width: 4px; 
 	background: transparent url(dialog/tip/l.gif) no-repeat 0% 0%;
 }
-.LinkPop .grid .ne {
+.TipPop .grid .ne {
 	width: 4px; 
 	background: transparent url(dialog/tip/r.gif) no-repeat top right;
 }
-.LinkPop .grid .sw {
+.TipPop .grid .sw {
 	width: 4px; height: 4px;
 	background: transparent url(dialog/tip/l.gif) no-repeat bottom left;
 }
-.LinkPop .grid .se {
+.TipPop .grid .se {
 	width: 4px; height: 4px;
 	background: transparent url(dialog/tip/r.gif) no-repeat bottom right;
 }
-.LinkPop .grid .north {
+.TipPop .grid .north {
 	background: transparent url(dialog/tip/c.gif) repeat-x 0% 0%;
 	padding: 5px 6px 0px 3px; 
 	font-size: 82%;
 	color: black;
 }
-.LinkPop .grid .s {
+.TipPop .grid .s {
 	height: 4px; 
 	background: transparent url(dialog/tip/c.gif) repeat-x 0% 100%;
 }
 
 
-.LinkPop .LinkClose { 
+.TipPop .TipClose { 
 	width: 16px;
 	height: 16px;
 	position: absolute;
 	top: -5px;
 	right: -5px;
 }
-.LinkPop .LinkClose a {
+.TipPop .TipClose a {
 	width: 16px;
 	height: 16px;
 	display: block;
@@ -146,10 +149,10 @@
 	filter:alpha(opacity=75);-moz-opacity:.75;opacity:.75;
 	z-index:10001;
 }
-.LinkPop .LinkClose a:hover {
+.TipPop .TipClose a:hover {
 	filter:alpha(opacity=100);-moz-opacity:1;opacity:1; 
 }
-.LinkPop .north .mi {
+.TipPop .north .mi {
 	background-repeat: no-repeat;
 	background-position: top left;
 	padding: 0;
@@ -158,36 +161,90 @@
 	text-align: left; 
 }
 
-.LinkPop .north .mi p { margin: 0 0 2px 0; }
-.LinkPop .north .mi a { margin: 0 4px 0 0; }
-.LinkPop .north .mi a.edit { font-weight: bold; color: black; }
-.LinkPop .north .mi a.remove { color: red; }
+.TipPop .north .mi p { margin: 0 0 2px 0; }
+.TipPop .north .mi a { margin: 0 4px 0 0; }
+.TipPop .north .mi a.edit-link, .TipPop .north .mi a.edit-img { font-weight: bold; color: black; }
+.TipPop .north .mi a.remove-link, .TipPop .north .mi a.remove-img { color: red; }
 
 
-.LinkPop .p {
+.TipPop .p {
 	position: absolute;
 	visibility: hidden;
 	z-index:10002;
 	background-repeat: no-repeat;
 	display: block;
 }
-.LinkPop .ae {
+.TipPop .ae {
 	height: 16px; width: 9px;
 	background-image: url(dialog/tip/ae.gif)!important;
 }
-.LinkPop .aw {
+.TipPop .aw {
 	height: 16px; width: 9px;
 	background-image: url(dialog/tip/aw.gif)!important;
 }
-.LinkPop .an {
+.TipPop .an {
 	width: 16px; height: 9px;
 	background-image: url(dialog/tip/an.gif)!important;
 }
-.LinkPop .as {
+.TipPop .as {
 	width: 16px; height: 9px;
 	background-image: url(dialog/tip/as.gif)!important;
 }
 label { cursor:pointer;}
+
+.TipPop .mi .btn {
+	cursor: pointer;
+	border: 0;
+	width: 20px;
+	height: 20px;
+	margin: 2px;
+	padding: 2px;
+	vertical-align: middle;
+	color: inherit;
+	background-color: transparent;
+	display: inline-block;
+}
+* html .TipPop .mi .btn{ /* IE6 */
+	width: 24px;
+	overflow: visible;
+	padding: 2px 4px;
+}
+*:first-child+html .TipPop .mi .btn{ /* IE7 */
+	min-width: 24px;
+	overflow: visible;
+	padding: 2px 4px;
+}
+
+.TipPop .mi .btn .icon{
+	background: transparent url(icons/16x16/sprite-img-align.png) no-repeat 0 -8px;
+	_background-image: url(icons/16x16/sprite-img-align.gif);
+	width: 16px; 
+	height: 16px;
+	margin: 2px;
+}
+
+.TipPop .mi .align-left .icon{ background-position: 0 0; } 
+.TipPop .mi .align-center .icon{ background-position: 0 -16px; } 
+.TipPop .mi .align-right .icon{ background-position: 0 -32px; } 
+.TipPop .mi .align-absmiddle .icon{ background-position: 0 -48px; } 
+
+.TipPop .mi table.btns {
+	margin: 0;
+}
+.TipPop .mi table.btns td {
+	vertical-align: middle;
+	white-space: nowrap;
+}
+.TipPop .mi table.btns td.or {
+	padding: 0 4px;
+	font-size: 82%;
+}
+.TipPop .mi a.none {
+	font-size: 92%;
+	color: red;
+}
+.TipPop .mi .secondrow { margin-top: 1em; }
+
 
 .ModalMask {
 	background-color: black;
@@ -271,11 +328,16 @@ label { cursor:pointer;}
 	background-image: url(icons/64x64/link.png);
 }
 .ModalPop .link .mi input {
-	font-size: 118%;
 	margin:0;
 }
-.ModalPop .link .mi .type { padding: 0 0 0 7px; }
-.ModalPop .link .mi .type a {
+
+.ModalPop .img .mi label { display: bold; margin: 0 0 3px 2px; }
+.ModalPop .img .mi input.img-alt { display: block; margin: 1px 1px 1px 2px; width: 400px; border: 1px solid #7F9DB9; padding: 2px; }
+.ModalPop .img .mi input.img-alt:focus { border-width: 2px; margin: 0 0 0 1px; }
+
+
+.ModalPop .mi .tab_bar { padding: 0 0 0 7px; }
+.ModalPop .mi .tab_bar a {
 	font-size: 92%;
 	margin: 0 3px -1px 0;
 	padding: 2px 5px 3px 5px;
@@ -292,23 +354,36 @@ label { cursor:pointer;}
 	background: url(btn-tool/bg.png) repeat-x 50% 0;
 	color: black;
 }
-.ModalPop .link .mi input.dialog-input { margin: 1px 1px 1px 2px; width: 400px; border: 1px solid #7F9DB9; padding: 2px; }
-.ModalPop .link .mi input.dialog-input:focus { border-width: 2px; margin: 0 0 0 1px; }
-.ModalPop .link .mi .type a:hover {
+.ModalPop .mi input.dialog-input { margin: 1px 1px 1px 2px; width: 400px; border: 1px solid #7F9DB9; padding: 2px; font-size: 118%; }
+.ModalPop .mi input.dialog-input:focus { border-width: 2px; margin: 0 0 0 1px; }
+.ModalPop .mi .tab_bar a:hover {
 	text-decoration: none;
 	background-position: 50% -100px;
 }
-.ModalPop .link .mi .type .down {
+.ModalPop .mi .tab_bar .down, .ModalPop .mi .tab_bar .down:hover {
 	border-color: #777777;
 	background-position: 50% -50px;
+	cursor: default;
 }
-.ModalPop .link .mi .attr, .ModalPop .link .mi .fdbk {
+.ModalPop .link .mi .attr, .ModalPop .link .mi .fdbk, .ModalPop .img .mi .attr {
 	margin: 5px 0 3px 0;
 }
 .ModalPop .link .mi .attr .fdbk {
 	float: right;
 	text-align: right;
 }
+
+.ModalPop .img .mi {
+	background-image: url(icons/64x64/image.png);
+}
+.ModalPop .img .mi .upload-blk, .ModalPop .img .mi .albums-blk {
+	border-style: solid; 
+	border-color: #7F9DB9; 
+	border-width: 2px 0 0 0; 
+	padding: 5px 0 0 0;
+	margin: 1px 0 0 0;
+}
+
 .left { float: left; }
 .right { float: right; }
 .fail { color: red; }

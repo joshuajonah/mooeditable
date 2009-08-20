@@ -38,7 +38,7 @@
 			window.addEvent('domready', function(){
 			
 				var editor = $('textarea-1').mooEditable({
-					actions: 'formatBlock snippets | bold italic underline | asc_createlink urlimage | insertunorderedlist insertorderedlist indent outdent | justifyleft justifycenter justifyright | toggleview'
+					actions: 'formatBlock snippets | bold italic underline | createlink urlimage | insertunorderedlist insertorderedlist indent outdent | justifyleft justifycenter justifyright | toggleview'
 				});
 				
 				// Post submit
@@ -83,6 +83,7 @@
 		<li>Link function utilizes Ascribe Dialog and has the ability to detect when the cursor is in a link or whether a link is selected. Can detect links to an <a href="mailto:some-email-address@domain.com">email address</a>. Does on-the-fly email address validation. Clicking on a link in the editor will bring up a small "tooltip" menu ala <a href="http://mail.google.com/">Gmail</a> which allows the user to test, edit or remove the link.</li>
 		<li>Modified the <b>checkStates</b> function such that if a button's state attribute is a function, the function will pass the editor object as an argument along with the current node clicked upon in the editor. I needed the editor object to be passed along to a custom state function for the asc_createlink button to properly show and hide link tooltips.</li>
 		</ul>
+		<a href="http://en.wikipedia.org/wiki/Piranha"><img src="Demos/assets/pirhana.jpg" width="250" height="141" /></a>
 		<h3>Works in</h3>
 		<ul>
 		<li>Firefox</li>
@@ -95,6 +96,7 @@
 		<li>Find a way to internationalize it by allowing a script to supply strings.</li>
 		<li>When the content of the editor is taller than the editor window, the editor document scrolls, obviously. I added a <b>editorScroll</b> function to main MooEditable class to track when the user scrolls the editor in order that the little link tooltips will hide themselves upon scroll. However, the onScroll event doesn't seem to take in Internet Explorer.</b></li>
 		</ul>
+		
 		
 				
 			</textarea>

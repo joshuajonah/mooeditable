@@ -290,7 +290,7 @@ var MooEditable = new Class({
 			if (item) {
 				var dblclick = MooEditable.Actions[action]['ondblclick'];
 				if ($type(dblclick) == 'function'){
-					dblclick.attempt(this);
+					dblclick.attempt([item,e], this);
 					return;
 				}
 			}
