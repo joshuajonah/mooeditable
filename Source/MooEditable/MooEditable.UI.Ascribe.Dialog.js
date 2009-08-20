@@ -1160,7 +1160,7 @@ window.addEvent('domready', function(){
 		speed:150,
 		classPrefix: 'Modal',
 		place: {
-			'se': { trans:'fade', target:'window', io:-1, align:'c', offset:0, margin:0 }, // show end
+			'se': { trans:'fade', target:'window', io:-1, align:'n', offset:80, margin:0 }, // show end
 			'he': { trans:'fade', target:'window', io:-1} // hide end
 		}
 	});
@@ -1840,9 +1840,11 @@ window.addEvent('domready', function(){
 						var imgs = tmp.getElements('img');
 						if (imgs) {
 							imgs.each(function(img) {
-								var sz = img.getSize();
+								img.erase('height');
+								img.erase('width');
 								img.erase('styles');
 								img.erase('align');
+								var sz = img.getSize();
 								if ((sz.x > thumb_px) || (sz.y > thumb_px)) {
 									if (sz.y > thumb_px) {
 										img.set('height', thumb_px);
